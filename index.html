@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROTOTYPE — Parchotage Planner (maquette UI v1)</title>
+<title>Parchotage Planner — coût du parchotage Dofus 3</title>
 <style>
   :root {
     --bg:#f6f7f9;
@@ -19,9 +19,6 @@
     --th:#fafbfc;
     --pill:#f1f3f5;
     --input-hover:#c4c8d0;
-    --notebg:#fffbeb;
-    --notefg:#92400e;
-    --noteline:#fde68a;
   }
   [data-theme="dark"] {
     --bg:#0f1115;
@@ -37,9 +34,6 @@
     --th:#1d2027;
     --pill:#22262e;
     --input-hover:#414a59;
-    --notebg:#1c1a0e;
-    --notefg:#e0c36a;
-    --noteline:#4a3d1d;
   }
   * { box-sizing: border-box; }
   html { background: var(--bg); }
@@ -53,9 +47,6 @@
     padding-bottom:80px;
   }
   .num { font-variant-numeric: tabular-nums; }
-
-  .proto-note { background:var(--notebg); color:var(--notefg); border-bottom:1px solid var(--noteline); padding:6px 16px; font-size:.78rem; }
-  .proto-note b { letter-spacing:.02em; }
 
   header.site {
     display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
@@ -130,9 +121,6 @@
 
   main { padding:0 20px 48px; max-width:900px; margin:0 auto; }
 
-  fieldset { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 20px; margin:0 0 20px; }
-  legend { font-size:.74rem; font-weight:600; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.08em; }
-
   table { border-collapse:collapse; width:100%; }
   table.fixed { table-layout:fixed; }
   table.fixed .col-price { width:132px; }
@@ -169,7 +157,7 @@
   .warn { color:var(--bad); font-size:.8rem; }
   .good { color:var(--good); }
 
-  /* ---- Variante B : cartes ---- */
+  /* ---- Cartes par stat ---- */
   .section-head { display:flex; align-items:baseline; justify-content:space-between; margin:0 0 14px; }
   .section-head .t { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
   .section-head .hint { font-size:.78rem; color:var(--faint); }
@@ -210,29 +198,16 @@
   details.prices summary::before { content:"▸ "; color:var(--accent); }
   details.prices[open] summary::before { content:"▾ "; }
   details.prices .inner { padding:0 18px 16px; }
-
-  .switcher {
-    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-    display:flex; align-items:center; gap:10px;
-    background:#171a1f; color:#f6f7f9; padding:8px 14px; border-radius:999px;
-    border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 8px 24px rgba(16,24,40,.25); font-size:.84rem; z-index:99;
+  details.prices .price-note {
+    margin:0 0 12px; padding:8px 12px; border-radius:8px;
+    background:var(--pill); border:1px solid var(--line);
+    font-size:.76rem; color:var(--muted); line-height:1.5;
   }
-  .switcher button { background:#2b3038; color:#fff; border:0; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:.92rem; }
-  .switcher button:hover { background:#3c424c; }
-  .switcher .key { font-weight:700; color:#a5b4fc; }
+  details.prices .price-note b { color:var(--ink); }
 </style>
 </head>
 <body>
-<div class="proto-note">⚠ <b>PROTOTYPE jetable</b> — maquette pour valider forme &amp; comportement. Bascule de variante : barre flottante en bas ou touches ← / →.</div>
-
 <div id="app"></div>
-
-<div class="switcher" id="switcher">
-  <button id="prev" title="Variante précédente">←</button>
-  <span id="label"></span>
-  <button id="next" title="Variante suivante">→</button>
-</div>
 
 <script>
 "use strict";
@@ -247,25 +222,49 @@ const STATS = [
 ];
 
 const PALIERS = [
-  { key:"petit",    name:"Petit Parchemin",   threshold:25,  gain:1, def:1000 },
-  { key:"parchemin",name:"Parchemin",         threshold:50,  gain:1, def:2500 },
-  { key:"grand",    name:"Grand Parchemin",   threshold:80,  gain:1, def:5000 },
-  { key:"puissant", name:"Puissant Parchemin",threshold:100, gain:2, def:8000 },
+  { key:"petit",    name:"Petit Parchemin",   threshold:25,  gain:1 },
+  { key:"parchemin",name:"Parchemin",         threshold:50,  gain:1 },
+  { key:"grand",    name:"Grand Parchemin",   threshold:80,  gain:1 },
+  { key:"puissant", name:"Puissant Parchemin",threshold:100, gain:2 },
 ];
 
-const VARIANTS = {
-  A: { name:"Formulaire linéaire" },
-  B: { name:"Cartes par stat" },
-  C: { name:"Matrice dense" },
+const PRICE_DEFAULTS = {
+  VITA:   { petit:3799,  parchemin:19555, grand:38999, puissant:68999 },
+  FORCE:  { petit:3076,  parchemin:16999, grand:39999, puissant:74999 },
+  INTE:   { petit:4094,  parchemin:14499, grand:25999, puissant:51799 },
+  CHANCE: { petit:3999,  parchemin:14199, grand:39999, puissant:69999 },
+  AGI:    { petit:2800,  parchemin:15399, grand:24999, puissant:74999 },
+  SAGE:   { petit:4499,  parchemin:26999, grand:38999, puissant:58999 },
 };
+
+const PRICES_KEY = "pp.prices.v1";
 
 const state = {
   stats: {},
   prices: {},
   mode: "optimal",
 };
-STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; state.prices[s.key] = {}; });
-STATS.forEach(s => PALIERS.forEach(p => { state.prices[s.key][p.key] = p.def; }));
+STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; });
+
+function loadPrices() {
+  const defs = {};
+  STATS.forEach(s => { defs[s.key] = Object.assign({}, PRICE_DEFAULTS[s.key]); });
+  try {
+    const saved = JSON.parse(localStorage.getItem(PRICES_KEY));
+    if (saved) {
+      STATS.forEach(s => {
+        const sp = saved[s.key];
+        if (sp) PALIERS.forEach(p => { if (typeof sp[p.key] === "number") defs[s.key][p.key] = sp[p.key]; });
+      });
+    }
+  } catch (e) { /* prix corrompus -> défauts */ }
+  state.prices = defs;
+}
+loadPrices();
+
+function savePrices() {
+  try { localStorage.setItem(PRICES_KEY, JSON.stringify(state.prices)); } catch (e) {}
+}
 
 const fmt = n => n.toLocaleString("fr-FR");
 
@@ -359,16 +358,16 @@ function statIcon(s) {
   return s.icon ? `<img class="icon" src="${s.icon}" alt="">` : `<span class="dot"></span>`;
 }
 
-function priceInputsTable(includeStatHeader) {
+function priceInputsTable() {
   let t = "<div class='price-table-wrap'><table class='fixed'><colgroup>";
-  if (includeStatHeader) t += "<col class='col-stat'>";
+  t += "<col class='col-stat'>";
   PALIERS.forEach(() => t += "<col class='col-price'>");
   t += "</colgroup><thead><tr>";
-  if (includeStatHeader) t += "<th>Statistique</th>";
+  t += "<th>Statistique</th>";
   PALIERS.forEach(p => t += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
   t += "</tr></thead><tbody>";
   STATS.forEach(s => {
-    t += `<tr>${includeStatHeader ? `<td><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></td>` : ""}`;
+    t += `<tr><td><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></td>`;
     PALIERS.forEach(p => {
       t += `<td class="center"><input type="number" min="0" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
     });
@@ -386,97 +385,6 @@ function priceInputsTable(includeStatHeader) {
   });
   g += "</div>";
   return t + g;
-}
-
-function resultTable() {
-  let h = `<table><thead><tr><th>Statistique</th>`;
-  PALIERS.forEach(p => h += `<th>${p.name}</th>`);
-  h += `<th>Coût (kamas)</th><th></th></tr></thead><tbody>`;
-  STATS.forEach(st => {
-    h += `<tr><td>${st.name}</td>`;
-    PALIERS.forEach(p => h += `<td class="num" id="res-qty-${st.key}-${p.key}">—</td>`);
-    h += `<td class="num" id="res-cost-${st.key}">—</td><td id="res-warn-${st.key}"></td></tr>`;
-  });
-  h += `</tbody></table>`;
-  return h;
-}
-
-/* ---------- Variant A : formulaire linéaire ---------- */
-function renderA() {
-  return `
-    ${siteHeader()}
-    <main>
-    <section>
-      <fieldset><legend>1 · Prix des parchemins (kamas)</legend>${priceInputsTable(true)}</fieldset>
-      <fieldset><legend>2 · Objectifs par statistique</legend>
-        <table><thead><tr><th>Statistique</th><th>Déjà-parchoté</th><th>Objectif</th></tr></thead><tbody>
-        ${STATS.map(s => `<tr><td>${s.name}</td><td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td><td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td></tr>`).join("")}
-        </tbody></table>
-      </fieldset>
-      <fieldset><legend>3 · Recette recommandée</legend>
-        ${resultTable()}
-        <div id="res-global-warn"></div>
-      </fieldset>
-    </section>
-    </main>`;
-}
-
-/* ---------- Variant B : cartes par stat ---------- */
-function renderB() {
-  return `
-    ${siteHeader()}
-    <main>
-    <details class="prices">
-      <summary>Prix des parchemins (kamas)</summary>
-      <div class="inner">${priceInputsTable(true)}</div>
-    </details>
-    <div class="section-head"><span class="t">Statistiques</span><span class="hint">6 caractéristiques · cap 100</span></div>
-    <div class="cards">
-      ${STATS.map(s => `
-        <div class="card ${state.stats[s.key].enabled ? '' : 'disabled'}" style="--c:${s.color}">
-          <button class="stat-toggle ${state.stats[s.key].enabled ? 'on' : 'off'}" data-stat="${s.key}" title="Inclure / exclure cette statistique" aria-label="Inclure ou exclure ${s.name}">${ICON_POWER}</button>
-          <div class="card-body">
-            <h3>${statIcon(s)}${s.name}</h3>
-            <div class="inputs">
-              <label class="field">Déjà-parchoté
-                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
-              </label>
-              <label class="field">Objectif
-                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
-              </label>
-            </div>
-            <div id="res-${s.key}"></div>
-          </div>
-        </div>`).join("")}
-    </div>
-    <div id="res-global-warn"></div>
-    </main>`;
-}
-
-/* ---------- Variant C : matrice dense ---------- */
-function renderC() {
-  let h = `${siteHeader()}
-    <main>
-    <table>
-      <thead><tr>
-        <th>Statistique</th>
-        <th>Déjà-parchoté</th><th>Objectif</th>`;
-  PALIERS.forEach(p => h += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
-  h += `<th>Petit</th><th>Parchemin</th><th>Grand</th><th>Puissant</th><th>Coût (kamas)</th></tr></thead><tbody>`;
-  STATS.forEach(s => {
-    h += `<tr><td>${s.name}</td>`;
-    h += `<td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td>`;
-    h += `<td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td>`;
-    PALIERS.forEach(p => {
-      h += `<td><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
-    });
-    PALIERS.forEach(p => h += `<td class="num" id="res-qty-${s.key}-${p.key}">—</td>`);
-    h += `<td class="num" id="res-cost-${s.key}">—</td>`;
-    h += `<td id="res-warn-${s.key}"></td></tr>`;
-  });
-  h += `</tbody></table>`;
-  h += `<div id="res-global-warn"></div></main>`;
-  return h;
 }
 
 function siteHeader() {
@@ -509,12 +417,39 @@ function siteHeader() {
     </header>`;
 }
 
-function render(variant) {
+function render() {
   const app = document.getElementById("app");
-  if (variant === "A") app.innerHTML = renderA();
-  else if (variant === "B") app.innerHTML = renderB();
-  else app.innerHTML = renderC();
-  document.getElementById("label").innerHTML = `<span class="key">${variant}</span> — ${VARIANTS[variant].name}`;
+  app.innerHTML = `
+    ${siteHeader()}
+    <main>
+    <details class="prices" open>
+      <summary>Prix des parchemins (kamas)</summary>
+      <div class="inner">
+        <p class="price-note"><b>Prix d'exemple</b> (observés sur le serveur de l'auteur) — les prix varient selon le serveur et dans le temps : remplacez-les par ceux de votre serveur. Vos saisies sont enregistrées localement.</p>
+        ${priceInputsTable()}
+      </div>
+    </details>
+    <div class="section-head"><span class="t">Statistiques</span><span class="hint">6 caractéristiques · cap 100</span></div>
+    <div class="cards">
+      ${STATS.map(s => `
+        <div class="card ${state.stats[s.key].enabled ? '' : 'disabled'}" style="--c:${s.color}">
+          <button class="stat-toggle ${state.stats[s.key].enabled ? 'on' : 'off'}" data-stat="${s.key}" title="Inclure / exclure cette statistique" aria-label="Inclure ou exclure ${s.name}">${ICON_POWER}</button>
+          <div class="card-body">
+            <h3>${statIcon(s)}${s.name}</h3>
+            <div class="inputs">
+              <label class="field">Déjà-parchoté
+                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
+              </label>
+              <label class="field">Objectif
+                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
+              </label>
+            </div>
+            <div id="res-${s.key}"></div>
+          </div>
+        </div>`).join("")}
+    </div>
+    <div id="res-global-warn"></div>
+    </main>`;
   refreshResults();
   applyThemeIcon();
 }
@@ -565,6 +500,7 @@ function updateFromInput(el) {
   else if (kind === "price") {
     const pal = el.dataset.palier;
     state.prices[stat][pal] = Number(el.value) || 0;
+    savePrices();
     document.querySelectorAll(`[data-kind="price"][data-stat="${stat}"][data-palier="${pal}"]`).forEach(x => { if (x !== el) x.value = el.value; });
   }
   refreshResults();
@@ -595,7 +531,7 @@ document.getElementById("app").addEventListener("click", e => {
     return;
   }
   const m = e.target.closest(".mode-btn");
-  if (m) { state.mode = m.dataset.mode; render(current); return; }
+  if (m) { state.mode = m.dataset.mode; render(); return; }
   const ib = e.target.closest(".info-btn");
   if (ib) {
     const wasOpen = ib.classList.contains("open");
@@ -607,7 +543,7 @@ document.getElementById("app").addEventListener("click", e => {
     return;
   }
   const st = e.target.closest(".stat-toggle");
-  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(current); return; }
+  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(); return; }
   document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
 });
 
@@ -628,32 +564,7 @@ function positionInfoTooltip(btn) {
   tip.style.left = left + "px";
 }
 
-let current = new URLSearchParams(location.search).get("variant") || "B";
-if (!VARIANTS[current]) current = "B";
-
-function go(v) {
-  current = v;
-  const url = new URL(location.href);
-  url.searchParams.set("variant", v);
-  history.replaceState(null, "", url);
-  render(v);
-}
-document.getElementById("prev").addEventListener("click", () => {
-  const keys = Object.keys(VARIANTS);
-  go(keys[(keys.indexOf(current) + keys.length - 1) % keys.length]);
-});
-document.getElementById("next").addEventListener("click", () => {
-  const keys = Object.keys(VARIANTS);
-  go(keys[(keys.indexOf(current) + 1) % keys.length]);
-});
-document.addEventListener("keydown", e => {
-  if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) return;
-  const keys = Object.keys(VARIANTS);
-  if (e.key === "ArrowLeft") go(keys[(keys.indexOf(current) + keys.length - 1) % keys.length]);
-  if (e.key === "ArrowRight") go(keys[(keys.indexOf(current) + 1) % keys.length]);
-});
-
-render(current);
+render();
 </script>
 </body>
 </html>
