@@ -108,13 +108,8 @@
   .info-btn:hover .tooltip, .info-btn:focus .tooltip, .info-btn.open .tooltip { display:block; }
 
   @media (max-width: 720px) {
-    .info-btn .tooltip {
-      position: fixed; left:50%; right:auto; top:auto; bottom:84px;
-      transform:translateX(-50%);
-      width:calc(100vw - 32px); max-width:340px;
-    }
     .head-right { flex-direction:column; align-items:stretch; gap:10px; }
-    .head-right .total-badge { align-self:flex-end; }
+    .head-right .total-badge { width:100%; }
   }
 
   .card { position:relative; }
@@ -579,13 +574,32 @@ document.getElementById("app").addEventListener("click", e => {
   if (ib) {
     const wasOpen = ib.classList.contains("open");
     document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
-    if (!wasOpen) ib.classList.add("open");
+    if (!wasOpen) {
+      ib.classList.add("open");
+      if (window.innerWidth <= 720) positionInfoTooltip(ib);
+    }
     return;
   }
   const st = e.target.closest(".stat-toggle");
   if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(current); return; }
   document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
 });
+
+function positionInfoTooltip(btn) {
+  const tip = btn.querySelector(".tooltip");
+  if (!tip) return;
+  const r = btn.getBoundingClientRect();
+  const margin = 8;
+  const width = tip.offsetWidth || 300;
+  tip.style.position = "fixed";
+  tip.style.top = (r.bottom + margin) + "px";
+  tip.style.bottom = "auto";
+  tip.style.right = "auto";
+  tip.style.left = "auto";
+  let left = Math.min(r.left, window.innerWidth - width - margin);
+  if (left < margin) left = margin;
+  tip.style.left = left + "px";
+}
 
 let current = new URLSearchParams(location.search).get("variant") || "B";
 if (!VARIANTS[current]) current = "B";
