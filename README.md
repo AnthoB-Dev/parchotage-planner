@@ -14,13 +14,13 @@ Calculateur du coût du parchotage pour **Dofus 3**. En quelques clics, trouvez 
 
 ## 🔗 Accéder à l'outil
 
-<!-- TODO : ajouter le lien GitHub Pages une fois le déploiement effectué -->
+→ **https://anthob-dev.github.io/parchotage-planner/**
 
-→ L'outil est disponible ici : **_(lien à venir)_**
+Ou ouvrez `index.html` dans un navigateur.
 
 ## 🚀 Utilisation
 
-1. Ouvrez le lien ci-dessus (ou ouvrez `index.html` dans un navigateur).
+1. Ouvrez le lien ci-dessus.
 2. (Optionnel) Ajustez les **prix des parchemins** à ceux pratiqués sur votre serveur.
 3. Renseignez votre **déjà-parchoté** et votre **objectif** pour chaque statistique.
 4. Lisez la **combinaison recommandée** et le **coût total estimé**.
