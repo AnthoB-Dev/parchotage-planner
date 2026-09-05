@@ -74,7 +74,8 @@
   .total-badge .amt { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; color:var(--ink); }
   .total-badge .amt small { font-size:.75rem; font-weight:500; color:var(--muted); }
 
-  .head-right { display:flex; align-items:center; gap:12px; margin-left:auto; }
+  .head-right { display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; }
+  .mode-group { display:flex; align-items:center; gap:10px; }
   .theme-toggle {
     width:40px; height:40px; border-radius:10px; cursor:pointer;
     background:var(--surface); border:1px solid var(--line); color:var(--ink);
@@ -88,7 +89,7 @@
   .mode-btn { border:0; background:transparent; color:var(--muted); font-size:.82rem; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer; white-space:nowrap; }
   .mode-btn.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(16,24,40,.1); }
 
-  .title-group { display:flex; align-items:center; gap:12px; }
+  .title-group { display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; }
 
   .info-btn {
     position:relative; width:26px; height:26px; border-radius:8px; cursor:pointer;
@@ -461,14 +462,16 @@ function siteHeader() {
         <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
       </div>
       <div class="head-right">
-        <div class="mode-toggle">
-          <button class="mode-btn ${state.mode === 'optimal' ? 'active' : ''}" data-mode="optimal">Optimal</button>
-          <button class="mode-btn ${state.mode === 'classique' ? 'active' : ''}" data-mode="classique">Classique</button>
+        <div class="mode-group">
+          <div class="mode-toggle">
+            <button class="mode-btn ${state.mode === 'optimal' ? 'active' : ''}" data-mode="optimal">Optimal</button>
+            <button class="mode-btn ${state.mode === 'classique' ? 'active' : ''}" data-mode="classique">Classique</button>
+          </div>
+          <button class="info-btn" aria-label="Explication des modes de calcul">
+            ${ICON_INFO}
+            <span class="tooltip"><b>Optimal</b> - la combinaison la moins chère en kamas pour atteindre l'objectif.<br><br><b>Classique</b> - la répartition standard 25 Petit · 25 Parchemin · 30 Grand · 10 Puissant.</span>
+          </button>
         </div>
-        <button class="info-btn" aria-label="Explication des modes de calcul">
-          ${ICON_INFO}
-          <span class="tooltip"><b>Optimal</b> - la combinaison la moins chère en kamas pour atteindre l'objectif.<br><br><b>Classique</b> - la répartition standard 25 Petit · 25 Parchemin · 30 Grand · 10 Puissant.</span>
-        </button>
         <div class="total-badge">
           <span class="lbl">Coût total estimé</span>
           <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
