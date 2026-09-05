@@ -126,6 +126,7 @@
     display:flex; align-items:center; gap:8px;
   }
   .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--c); box-shadow:0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); display:inline-block; }
+  .icon { width:22px; height:22px; flex:0 0 auto; object-fit:contain; display:inline-block; }
   .card .inputs { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
   .recipe { font-size:.8rem; color:var(--muted); margin:0 0 10px; }
   .recipe .pill {
@@ -178,11 +179,11 @@
 
 const STATS = [
   { key:"VITA",   name:"Vitalité",     color:"#ef4444" },
-  { key:"FORCE",  name:"Force",        color:"#f97316" },
-  { key:"INTE",   name:"Intelligence", color:"#a855f7" },
-  { key:"CHANCE", name:"Chance",       color:"#eab308" },
-  { key:"AGI",    name:"Agilité",      color:"#22c55e" },
-  { key:"SAGE",   name:"Sagesse",      color:"#0ea5e9" },
+  { key:"FORCE",  name:"Force",        color:"#f97316", icon:"assets/img/force.png" },
+  { key:"INTE",   name:"Intelligence", color:"#a855f7", icon:"assets/img/intelligence.png" },
+  { key:"CHANCE", name:"Chance",       color:"#eab308", icon:"assets/img/chance.png" },
+  { key:"AGI",    name:"Agilité",      color:"#22c55e", icon:"assets/img/agilite.png" },
+  { key:"SAGE",   name:"Sagesse",      color:"#0ea5e9", icon:"assets/img/sagesse.png" },
 ];
 
 const PALIERS = [
@@ -318,7 +319,7 @@ function renderB() {
     <div class="cards">
       ${STATS.map(s => `
         <div class="card" style="--c:${s.color}">
-          <h3><span class="dot"></span>${s.name}</h3>
+          <h3>${s.icon ? `<img class="icon" src="${s.icon}" alt="">` : `<span class="dot"></span>`}${s.name}</h3>
           <div class="inputs">
             <label class="field">Déjà-parchoté
               <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
