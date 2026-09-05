@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — Parchotage Planner (maquette UI v1)</title>
+<style>
+  :root { --ink:#1a1a1a; --line:#bbb; --muted:#666; --bg:#fff; --soft:#f4f4f4; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:var(--ink); background:var(--bg); padding-bottom:72px; }
+  h1 { font-size:1.1rem; margin:0 0 2px; }
+  h2 { font-size:.95rem; margin:0 0 10px; }
+  .muted { color:var(--muted); font-size:.8rem; }
+  .proto-note { background:#fff3cd; border-bottom:1px solid #e0c36a; padding:6px 16px; font-size:.8rem; }
+  main { padding:16px; max-width:980px; margin:0 auto; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { border:1px solid var(--line); padding:4px 6px; font-size:.85rem; text-align:left; vertical-align:middle; }
+  th { background:var(--soft); font-weight:600; }
+  input[type=number] { width:64px; padding:3px 4px; border:1px solid var(--line); font-size:.85rem; }
+  .num { text-align:right; }
+  .warn { color:#a33; font-size:.8rem; }
+  .ok { color:#275; }
+  .total { font-size:1rem; font-weight:700; }
+  section { margin-bottom:22px; }
+  fieldset { border:1px dashed var(--line); padding:8px 12px; margin:0 0 16px; }
+  legend { font-size:.8rem; color:var(--muted); padding:0 4px; }
+
+  /* Variant B cards */
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+  .card { border:1px solid var(--line); border-radius:4px; padding:10px; }
+  .card h3 { margin:0 0 8px; font-size:.9rem; }
+  .card .row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .card .row label { font-size:.8rem; color:var(--muted); flex:0 0 auto; }
+
+  /* Switcher bar */
+  .switcher {
+    position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:12px;
+    background:#111; color:#fff; padding:8px 14px; border-radius:999px;
+    box-shadow:0 4px 16px rgba(0,0,0,.3); font-size:.85rem; z-index:99;
+  }
+  .switcher button { background:#333; color:#fff; border:0; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; }
+  .switcher button:hover { background:#555; }
+  .switcher .key { font-weight:700; }
+</style>
+</head>
+<body>
+<div class="proto-note">⚠ PROTOTYPE jetable — maquette basse fidélité pour valider forme &amp; comportement. Bascule de variante : barre flottante en bas ou touches ← / →.</div>
+<main id="app"></main>
+<div class="switcher" id="switcher">
+  <button id="prev" title="Variante précédente">←</button>
+  <span id="label"></span>
+  <button id="next" title="Variante suivante">→</button>
+</div>
+
+<script>
+"use strict";
+
+const STATS = [
+  { key:"FORCE",  name:"Force" },
+  { key:"VITA",   name:"Vitalité" },
+  { key:"SAGE",   name:"Sagesse" },
+  { key:"CHANCE", name:"Chance" },
+  { key:"AGI",    name:"Agilité" },
+  { key:"INTE",   name:"Intelligence" },
+];
+
+const PALIERS = [
+  { key:"petit",    name:"Petit Parchemin",   threshold:25,  gain:1, def:1000 },
+  { key:"parchemin",name:"Parchemin",         threshold:50,  gain:1, def:2500 },
+  { key:"grand",    name:"Grand Parchemin",   threshold:80,  gain:1, def:5000 },
+  { key:"puissant", name:"Puissant Parchemin",threshold:100, gain:2, def:8000 },
+];
+
+const VARIANTS = {
+  A: { name:"Formulaire linéaire" },
+  B: { name:"Cartes par stat" },
+  C: { name:"Matrice dense" },
+};
+
+const state = {
+  stats: {},
+  prices: {},
+};
+STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100 }; state.prices[s.key] = {}; });
+STATS.forEach(s => PALIERS.forEach(p => { state.prices[s.key][p.key] = p.def; }));
+
+const fmt = n => n.toLocaleString("fr-FR");
+
+function compute(statKey) {
+  const cur = state.stats[statKey].cur;
+  const obj = state.stats[statKey].obj;
+  const pr = state.prices[statKey];
+  const q = { petit:0, parchemin:0, grand:0, puissant:0 };
+  const out = { cost:0, reachable:true, warnings:[], quantities:q };
+
+  if (cur >= obj) {
+    out.warnings.push("Déjà-parchoté ≥ objectif → 0 parchemin nécessaire.");
+    return out;
+  }
+  if (cur >= 80 && cur % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Déjà-parchoté impair ≥ 80 : état inatteignable en jeu.");
+    return out;
+  }
+  if (obj > 80 && obj % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Objectif impair > 80 : inatteignable (seul le Puissant +2 couvre 80→100).");
+    return out;
+  }
+  const INF = Infinity;
+  const dp = new Array(101).fill(INF);
+  const parent = new Array(101).fill(null);
+  dp[cur] = 0;
+  for (let n = cur; n <= 100; n++) {
+    if (dp[n] === INF) continue;
+    const steps = [];
+    if (n < 25)  steps.push({ gain:1, key:"petit",    cost:pr.petit });
+    if (n < 50)  steps.push({ gain:1, key:"parchemin",cost:pr.parchemin });
+    if (n < 80)  steps.push({ gain:1, key:"grand",    cost:pr.grand });
+    if (n < 100) steps.push({ gain:2, key:"puissant", cost:pr.puissant });
+    for (const s of steps) {
+      const next = n + s.gain;
+      if (next > obj) continue;
+      if (dp[n] + s.cost < dp[next]) { dp[next] = dp[n] + s.cost; parent[next] = { from:n, key:s.key }; }
+    }
+  }
+  if (dp[obj] === INF) {
+    out.reachable = false;
+    out.warnings.push("Objectif inatteignable avec les paliers disponibles.");
+    return out;
+  }
+  out.cost = dp[obj];
+  let t = obj;
+  while (parent[t]) { out.quantities[parent[t].key]++; t = parent[t].from; }
+  return out;
+}
+
+function priceInputsTable(includeStatHeader) {
+  let h = "<table><thead><tr>";
+  if (includeStatHeader) h += "<th>Statistique</th>";
+  PALIERS.forEach(p => h += `<th>${p.name}<br><span class='muted'>&lt; ${p.threshold}</span></th>`);
+  h += "</tr></thead><tbody>";
+  STATS.forEach(s => {
+    h += `<tr>${includeStatHeader ? `<td>${s.name}</td>` : ""}`;
+    PALIERS.forEach(p => {
+      h += `<td class="num"><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
+    });
+    h += "</tr>";
+  });
+  h += "</tbody></table>";
+  return h;
+}
+
+function statInputs(s) {
+  return `
+    <label class="muted">Déjà-parchoté
+      <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
+    </label>
+    <label class="muted">Objectif
+      <input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
+    </label>`;
+}
+
+function resultInline(s) {
+  return `
+    <div id="res-${s.key}" class="result"></div>`;
+}
+
+function resultTable(s) {
+  let h = `<table><thead><tr><th>Statistique</th>`;
+  PALIERS.forEach(p => h += `<th>${p.name}</th>`);
+  h += `<th>Coût (kamas)</th><th></th></tr></thead><tbody>`;
+  STATS.forEach(st => {
+    h += `<tr><td>${st.name}</td>`;
+    PALIERS.forEach(p => h += `<td class="num" id="res-qty-${st.key}-${p.key}">—</td>`);
+    h += `<td class="num" id="res-cost-${st.key}">—</td><td id="res-warn-${st.key}"></td></tr>`;
+  });
+  h += `</tbody></table>`;
+  return h;
+}
+
+/* ---------- Variant A : formulaire linéaire ---------- */
+function renderA() {
+  return `
+    <h1>Parchotage Planner — calcul du parchotage optimal</h1>
+    <p class="muted">Variante A — Formulaire linéaire : prix → stats → résultat.</p>
+
+    <section>
+      <h2>1 · Prix des parchemins (kamas)</h2>
+      ${priceInputsTable(true)}
+    </section>
+
+    <section>
+      <h2>2 · Objectifs par statistique</h2>
+      <table><thead><tr><th>Statistique</th><th>Déjà-parchoté</th><th>Objectif</th></tr></thead><tbody>
+      ${STATS.map(s => `<tr><td>${s.name}</td><td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td><td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td></tr>`).join("")}
+      </tbody></table>
+    </section>
+
+    <section>
+      <h2>3 · Recette recommandée</h2>
+      ${resultTable()}
+      <p class="total">Total : <span id="res-total">—</span> kamas</p>
+      <div id="res-global-warn"></div>
+    </section>`;
+}
+
+/* ---------- Variant B : cartes par stat ---------- */
+function renderB() {
+  return `
+    <h1>Parchotage Planner</h1>
+    <p class="muted">Variante B — Cartes par stat : chaque stat porte ses entrées et son résultat.</p>
+
+    <details>
+      <summary class="muted">Prix des parchemins (kamas) — déplier</summary>
+      ${priceInputsTable(true)}
+    </details>
+
+    <p class="total">Coût total estimé : <span id="res-total">—</span> kamas</p>
+
+    <div class="cards">
+      ${STATS.map(s => `
+        <div class="card">
+          <h3>${s.name}</h3>
+          <div class="row">${statInputs(s)}</div>
+          ${resultInline(s)}
+        </div>`).join("")}
+    </div>
+    <div id="res-global-warn"></div>`;
+}
+
+/* ---------- Variant C : matrice dense ---------- */
+function renderC() {
+  let h = `
+    <h1>Parchotage Planner — matrice de saisie</h1>
+    <p class="muted">Variante C — Matrice dense : tout sur une seule table, prix saisis en colonnes.</p>
+    <table>
+      <thead><tr>
+        <th>Statistique</th>
+        <th>Déjà-parchoté</th><th>Objectif</th>`;
+  PALIERS.forEach(p => h += `<th>${p.name}<br><span class='muted'>&lt; ${p.threshold}</span></th>`);
+  h += `<th>Petit</th><th>Parchemin</th><th>Grand</th><th>Puissant</th><th>Coût (kamas)</th></tr></thead><tbody>`;
+  STATS.forEach(s => {
+    h += `<tr><td>${s.name}</td>`;
+    h += `<td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td>`;
+    h += `<td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td>`;
+    PALIERS.forEach(p => {
+      h += `<td><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
+    });
+    PALIERS.forEach(p => h += `<td class="num" id="res-qty-${s.key}-${p.key}">—</td>`);
+    h += `<td class="num" id="res-cost-${s.key}">—</td>`;
+    h += `<td id="res-warn-${s.key}"></td></tr>`;
+  });
+  h += `</tbody></table>`;
+  h += `<p class="total">Total : <span id="res-total">—</span> kamas</p>`;
+  h += `<div id="res-global-warn"></div>`;
+  return h;
+}
+
+function render(variant) {
+  const app = document.getElementById("app");
+  if (variant === "A") app.innerHTML = renderA();
+  else if (variant === "B") app.innerHTML = renderB();
+  else app.innerHTML = renderC();
+  document.getElementById("label").innerHTML = `<span class="key">${variant}</span> — ${VARIANTS[variant].name}`;
+  refreshResults();
+}
+
+function refreshResults() {
+  let total = 0;
+  const globalWarns = [];
+  STATS.forEach(s => {
+    const r = compute(s.key);
+    total += r.cost;
+    const warnEl = document.getElementById(`res-warn-${s.key}`);
+    if (warnEl) {
+      warnEl.className = r.warnings.length ? "warn" : "ok";
+      warnEl.textContent = r.warnings.length ? r.warnings.join(" ") : (r.cost === 0 ? "—" : "✓");
+    }
+    PALIERS.forEach(p => {
+      const el = document.getElementById(`res-qty-${s.key}-${p.key}`);
+      if (el) el.textContent = r.quantities[p.key];
+    });
+    const costEl = document.getElementById(`res-cost-${s.key}`);
+    if (costEl) costEl.textContent = r.reachable ? fmt(r.cost) : "—";
+    // variant B inline result
+    const inline = document.getElementById(`res-${s.key}`);
+    if (inline) {
+      inline.innerHTML = `
+        <div class="muted">Recette : ` + PALIERS.filter(p => r.quantities[p.key] > 0)
+          .map(p => `${r.quantities[p.key]}× ${p.name}`).join(" · ") + `</div>
+        <div>Coût : <strong>${r.reachable ? fmt(r.cost) : "—"} kamas</strong></div>
+        ${r.warnings.length ? `<div class="warn">${r.warnings.join(" ")}</div>` : ""}`;
+    }
+    if (r.warnings.length) globalWarns.push(`${s.name} : ${r.warnings.join(" ")}`);
+  });
+  const totalEl = document.getElementById("res-total");
+  if (totalEl) totalEl.textContent = fmt(total);
+  const g = document.getElementById("res-global-warn");
+  if (g) g.innerHTML = globalWarns.length ? `<p class="warn">⚠ ${globalWarns.join("<br>")}</p>` : "";
+}
+
+function updateFromInput(el) {
+  const kind = el.dataset.kind, stat = el.dataset.stat;
+  if (kind === "cur") state.stats[stat].cur = Number(el.value) || 0;
+  else if (kind === "obj") state.stats[stat].obj = Number(el.value) || 0;
+  else if (kind === "price") state.prices[stat][el.dataset.palier] = Number(el.value) || 0;
+  refreshResults();
+}
+
+document.getElementById("app").addEventListener("input", e => { if (e.target.dataset && e.target.dataset.kind) updateFromInput(e.target); });
+
+let current = new URLSearchParams(location.search).get("variant") || "A";
+if (!VARIANTS[current]) current = "A";
+
+function go(v) {
+  current = v;
+  const url = new URL(location.href);
+  url.searchParams.set("variant", v);
+  history.replaceState(null, "", url);
+  render(v);
+}
+document.getElementById("prev").addEventListener("click", () => {
+  const keys = Object.keys(VARIANTS);
+  go(keys[(keys.indexOf(current) + keys.length - 1) % keys.length]);
+});
+document.getElementById("next").addEventListener("click", () => {
+  const keys = Object.keys(VARIANTS);
+  go(keys[(keys.indexOf(current) + 1) % keys.length]);
+});
+document.addEventListener("keydown", e => {
+  if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) return;
+  const keys = Object.keys(VARIANTS);
+  if (e.key === "ArrowLeft") go(keys[(keys.indexOf(current) + keys.length - 1) % keys.length]);
+  if (e.key === "ArrowRight") go(keys[(keys.indexOf(current) + 1) % keys.length]);
+});
+
+render(current);
+</script>
+</body>
+</html>
