@@ -14,7 +14,7 @@ Calculateur du coût du parchotage pour **Dofus 3**. En quelques clics, trouvez 
 
 ## 🔗 Accéder à l'outil
 
-→ **https://anthob-dev.github.io/parchotage-planner/**
+→ **https://anthob-dev.github.io/Parchotage-Planner/**
 
 Ou ouvrez `index.html` dans un navigateur.
 
