@@ -112,16 +112,14 @@
   .stat-toggle {
     position:absolute; top:12px; right:12px; z-index:1;
     width:28px; height:28px; border-radius:8px; cursor:pointer;
-    background:transparent; border:1px solid transparent;
+    background:transparent; border:1px solid transparent; color:var(--muted);
     display:inline-flex; align-items:center; justify-content:center;
     transition:background-color .12s;
   }
-  .stat-toggle:hover { background:var(--pill); }
+  .stat-toggle:hover { background:var(--pill); color:var(--ink); }
   .stat-toggle svg { width:15px; height:15px; }
-  .stat-toggle.on { color:var(--bad); background:color-mix(in srgb, var(--bad) 10%, transparent); }
-  .stat-toggle.on:hover { background:color-mix(in srgb, var(--bad) 18%, transparent); }
-  .stat-toggle.off { color:var(--good); background:color-mix(in srgb, var(--good) 10%, transparent); }
-  .stat-toggle.off:hover { background:color-mix(in srgb, var(--good) 18%, transparent); }
+  .stat-toggle.on { color:var(--bad); }
+  .stat-toggle.off { color:var(--good); }
   .card h3 { padding-right:32px; }
   .card.disabled .card-body { opacity:.45; filter:grayscale(.6); }
 
