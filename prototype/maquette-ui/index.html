@@ -84,6 +84,24 @@
   .theme-toggle:hover { border-color:var(--line-strong); }
   .theme-toggle svg { width:18px; height:18px; }
 
+  .mode-toggle { display:inline-flex; background:var(--pill); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; }
+  .mode-btn { border:0; background:transparent; color:var(--muted); font-size:.82rem; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer; white-space:nowrap; }
+  .mode-btn.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(16,24,40,.1); }
+
+  .card { position:relative; }
+  .card-body { display:flex; flex-direction:column; }
+  .stat-toggle {
+    position:absolute; top:12px; right:12px; z-index:1;
+    width:28px; height:28px; border-radius:8px; cursor:pointer;
+    background:transparent; border:1px solid transparent; color:var(--muted);
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .stat-toggle:hover { background:var(--pill); color:var(--ink); }
+  .stat-toggle svg { width:15px; height:15px; }
+  .stat-toggle.off { color:var(--faint); }
+  .card h3 { padding-right:32px; }
+  .card.disabled .card-body { opacity:.45; filter:grayscale(.6); }
+
   main { padding:0 20px 48px; max-width:900px; margin:0 auto; }
 
   fieldset { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 20px; margin:0 0 20px; }
@@ -206,8 +224,9 @@ const VARIANTS = {
 const state = {
   stats: {},
   prices: {},
+  mode: "optimal",
 };
-STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100 }; state.prices[s.key] = {}; });
+STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:true }; state.prices[s.key] = {}; });
 STATS.forEach(s => PALIERS.forEach(p => { state.prices[s.key][p.key] = p.def; }));
 
 const fmt = n => n.toLocaleString("fr-FR");
@@ -258,6 +277,43 @@ function compute(statKey) {
   out.cost = dp[obj];
   let t = obj;
   while (parent[t]) { out.quantities[parent[t].key]++; t = parent[t].from; }
+  return out;
+}
+
+function computeClassic(statKey) {
+  const cur = state.stats[statKey].cur;
+  const obj = state.stats[statKey].obj;
+  const pr = state.prices[statKey];
+  const q = { petit:0, parchemin:0, grand:0, puissant:0 };
+  const out = { cost:0, reachable:true, warnings:[], quantities:q };
+
+  if (cur >= obj) {
+    out.warnings.push("Déjà-parchoté ≥ objectif → 0 parchemin nécessaire.");
+    return out;
+  }
+  if (cur >= 80 && cur % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Déjà-parchoté impair ≥ 80 : état inatteignable en jeu.");
+    return out;
+  }
+  if (obj > 80 && obj % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Objectif impair > 80 : inatteignable (seul le Puissant +2 couvre 80→100).");
+    return out;
+  }
+
+  let level = cur;
+  while (level < obj && level < 25)  { q.petit++;    level += 1; }
+  while (level < obj && level < 50)  { q.parchemin++; level += 1; }
+  while (level < obj && level < 80)  { q.grand++;    level += 1; }
+  while (level < obj && level < 100) { q.puissant++; level += 2; }
+
+  if (level !== obj) {
+    out.reachable = false;
+    out.warnings.push("Objectif inatteignable avec les paliers disponibles.");
+    return out;
+  }
+  out.cost = q.petit*pr.petit + q.parchemin*pr.parchemin + q.grand*pr.grand + q.puissant*pr.puissant;
   return out;
 }
 
@@ -329,17 +385,20 @@ function renderB() {
     <div class="section-head"><span class="t">Statistiques</span><span class="hint">6 caractéristiques · cap 100</span></div>
     <div class="cards">
       ${STATS.map(s => `
-        <div class="card" style="--c:${s.color}">
-          <h3>${statIcon(s)}${s.name}</h3>
-          <div class="inputs">
-            <label class="field">Déjà-parchoté
-              <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
-            </label>
-            <label class="field">Objectif
-              <input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
-            </label>
+        <div class="card ${state.stats[s.key].enabled ? '' : 'disabled'}" style="--c:${s.color}">
+          <button class="stat-toggle ${state.stats[s.key].enabled ? '' : 'off'}" data-stat="${s.key}" title="Inclure / exclure cette statistique" aria-label="Inclure ou exclure ${s.name}">${ICON_POWER}</button>
+          <div class="card-body">
+            <h3>${statIcon(s)}${s.name}</h3>
+            <div class="inputs">
+              <label class="field">Déjà-parchoté
+                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
+              </label>
+              <label class="field">Objectif
+                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
+              </label>
+            </div>
+            <div id="res-${s.key}"></div>
           </div>
-          <div id="res-${s.key}"></div>
         </div>`).join("")}
     </div>
     <div id="res-global-warn"></div>
@@ -381,11 +440,15 @@ function siteHeader() {
         <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
       </div>
       <div class="head-right">
-        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
+        <div class="mode-toggle">
+          <button class="mode-btn ${state.mode === 'optimal' ? 'active' : ''}" data-mode="optimal">Optimal</button>
+          <button class="mode-btn ${state.mode === 'classique' ? 'active' : ''}" data-mode="classique">Classique</button>
+        </div>
         <div class="total-badge">
           <span class="lbl">Coût total estimé</span>
           <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
         </div>
+        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
       </div>
     </header>`;
 }
@@ -404,8 +467,9 @@ function refreshResults() {
   let total = 0;
   const globalWarns = [];
   STATS.forEach(s => {
-    const r = compute(s.key);
-    total += r.cost;
+    const enabled = state.stats[s.key].enabled;
+    const r = (state.mode === "classique" ? computeClassic : compute)(s.key);
+    if (enabled) total += r.cost;
     const warnEl = document.getElementById(`res-warn-${s.key}`);
     if (warnEl) {
       warnEl.className = r.warnings.length ? "warn" : "good";
@@ -413,20 +477,24 @@ function refreshResults() {
     }
     PALIERS.forEach(p => {
       const el = document.getElementById(`res-qty-${s.key}-${p.key}`);
-      if (el) el.textContent = r.quantities[p.key];
+      if (el) el.textContent = enabled ? r.quantities[p.key] : "—";
     });
     const costEl = document.getElementById(`res-cost-${s.key}`);
-    if (costEl) costEl.textContent = r.reachable ? fmt(r.cost) : "—";
+    if (costEl) costEl.textContent = (enabled && r.reachable) ? fmt(r.cost) : "—";
     const inline = document.getElementById(`res-${s.key}`);
     if (inline) {
-      const pills = PALIERS.filter(p => r.quantities[p.key] > 0)
-        .map(p => `<span class="pill">${r.quantities[p.key]}× ${p.name}</span>`).join("");
-      inline.innerHTML = `
-        <p class="recipe">${pills || `<span class="good">Aucun parchemin nécessaire</span>`}</p>
-        <div class="cost num">${r.reachable ? fmt(r.cost) : "—"} <span class="k">kamas</span></div>
-        ${r.warnings.length ? `<span class="warn">${r.warnings.join(" ")}</span>` : ""}`;
+      if (!enabled) {
+        inline.innerHTML = `<div class="muted">Exclue du calcul</div>`;
+      } else {
+        const pills = PALIERS.filter(p => r.quantities[p.key] > 0)
+          .map(p => `<span class="pill">${r.quantities[p.key]}× ${p.name}</span>`).join("");
+        inline.innerHTML = `
+          <p class="recipe">${pills || `<span class="good">Aucun parchemin nécessaire</span>`}</p>
+          <div class="cost num">${r.reachable ? fmt(r.cost) : "—"} <span class="k">kamas</span></div>
+          ${r.warnings.length ? `<span class="warn">${r.warnings.join(" ")}</span>` : ""}`;
+      }
     }
-    if (r.warnings.length) globalWarns.push(`${s.name} : ${r.warnings.join(" ")}`);
+    if (enabled && r.warnings.length) globalWarns.push(`${s.name} : ${r.warnings.join(" ")}`);
   });
   const totalEl = document.getElementById("res-total");
   if (totalEl) totalEl.textContent = fmt(total);
@@ -446,6 +514,7 @@ document.getElementById("app").addEventListener("input", e => { if (e.target.dat
 
 const ICON_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 const ICON_SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
+const ICON_POWER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>`;
 
 const root = document.documentElement;
 root.setAttribute("data-theme", localStorage.getItem("theme") || "light");
@@ -457,11 +526,17 @@ function applyThemeIcon() {
 
 document.getElementById("app").addEventListener("click", e => {
   const t = e.target.closest("#theme-toggle");
-  if (!t) return;
-  const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  root.setAttribute("data-theme", next);
-  localStorage.setItem("theme", next);
-  applyThemeIcon();
+  if (t) {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    applyThemeIcon();
+    return;
+  }
+  const m = e.target.closest(".mode-btn");
+  if (m) { state.mode = m.dataset.mode; render(current); return; }
+  const st = e.target.closest(".stat-toggle");
+  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(current); }
 });
 
 let current = new URLSearchParams(location.search).get("variant") || "B";
