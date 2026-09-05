@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — Parchotage Planner (maquette UI v1)</title>
+<style>
+  :root {
+    --bg:#f6f7f9;
+    --surface:#ffffff;
+    --ink:#171a1f;
+    --muted:#6b7280;
+    --faint:#9aa1ab;
+    --line:#e7e9ee;
+    --line-strong:#d7dae0;
+    --accent:#4f46e5;
+    --good:#16a34a;
+    --bad:#dc2626;
+    --th:#fafbfc;
+    --pill:#f1f3f5;
+    --input-hover:#c4c8d0;
+    --notebg:#fffbeb;
+    --notefg:#92400e;
+    --noteline:#fde68a;
+  }
+  [data-theme="dark"] {
+    --bg:#0f1115;
+    --surface:#17191f;
+    --ink:#e6e8ec;
+    --muted:#9aa1ab;
+    --faint:#6b7280;
+    --line:#262a32;
+    --line-strong:#333945;
+    --accent:#818cf8;
+    --good:#34d399;
+    --bad:#f87171;
+    --th:#1d2027;
+    --pill:#22262e;
+    --input-hover:#414a59;
+    --notebg:#1c1a0e;
+    --notefg:#e0c36a;
+    --noteline:#4a3d1d;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .proto-note { background:var(--notebg); color:var(--notefg); border-bottom:1px solid var(--noteline); padding:6px 16px; font-size:.78rem; }
+  .proto-note b { letter-spacing:.02em; }
+
+  header.site {
+    display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
+    padding:40px 20px 28px;
+    max-width:900px; margin:0 auto;
+  }
+  header.site .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:.68rem; font-weight:600; color:var(--accent); margin:0 0 8px; }
+  header.site h1 { font-size:1.7rem; margin:0; font-weight:650; letter-spacing:-.02em; color:var(--ink); }
+  header.site .sub { font-size:.9rem; color:var(--muted); margin:6px 0 0; }
+  .total-badge {
+    text-align:right; background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; padding:12px 20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.05);
+  }
+  .total-badge .lbl { display:block; font-size:.66rem; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:var(--faint); }
+  .total-badge .amt { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; color:var(--ink); }
+  .total-badge .amt small { font-size:.75rem; font-weight:500; color:var(--muted); }
+
+  .head-right { display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; }
+  .mode-group { display:flex; align-items:center; gap:10px; }
+  .theme-toggle {
+    width:40px; height:40px; border-radius:10px; cursor:pointer;
+    background:var(--surface); border:1px solid var(--line); color:var(--ink);
+    display:inline-flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 2px rgba(16,24,40,.05);
+  }
+  .theme-toggle:hover { border-color:var(--line-strong); }
+  .theme-toggle svg { width:18px; height:18px; }
+
+  .mode-toggle { display:inline-flex; background:var(--pill); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; }
+  .mode-btn { border:0; background:transparent; color:var(--muted); font-size:.82rem; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer; white-space:nowrap; }
+  .mode-btn.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(16,24,40,.1); }
+
+  .title-group { display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px; }
+
+  .info-btn {
+    position:relative; width:26px; height:26px; border-radius:8px; cursor:pointer;
+    background:transparent; border:1px solid transparent; color:var(--muted);
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .info-btn:hover { background:var(--pill); color:var(--ink); }
+  .info-btn svg { width:15px; height:15px; }
+  .info-btn .tooltip {
+    display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:50;
+    width:300px; background:var(--surface); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    font-size:.78rem; line-height:1.55; font-weight:400; text-align:left;
+    box-shadow:0 8px 24px rgba(16,24,40,.18); white-space:normal;
+  }
+  .info-btn:hover .tooltip, .info-btn:focus .tooltip, .info-btn.open .tooltip { display:block; }
+
+  @media (max-width: 720px) {
+    .head-right { flex-direction:column; align-items:stretch; gap:10px; }
+    .head-right .total-badge { width:100%; text-align:center; }
+  }
+
+  .card { position:relative; }
+  .card-body { display:flex; flex-direction:column; }
+  .stat-toggle {
+    position:absolute; top:12px; right:12px; z-index:1;
+    width:28px; height:28px; border-radius:8px; cursor:pointer;
+    background:transparent; border:1px solid transparent; color:var(--muted);
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:background-color .12s;
+  }
+  .stat-toggle:hover { background:var(--pill); color:var(--ink); }
+  .stat-toggle svg { width:15px; height:15px; }
+  .stat-toggle.on { color:var(--bad); }
+  .stat-toggle.off { color:var(--good); }
+  .card h3 { padding-right:32px; }
+  .card.disabled .card-body { opacity:.45; filter:grayscale(.6); }
+
+  main { padding:0 20px 48px; max-width:900px; margin:0 auto; }
+
+  fieldset { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 20px; margin:0 0 20px; }
+  legend { font-size:.74rem; font-weight:600; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.08em; }
+
+  table { border-collapse:collapse; width:100%; }
+  table.fixed { table-layout:fixed; }
+  table.fixed .col-price { width:132px; }
+  .center { text-align:center; }
+  .stat-cell { display:inline-flex; align-items:center; gap:8px; }
+  .price-grid { display:none; }
+  .price-grid .pg-stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .price-grid .pg-head { margin-bottom:10px; }
+  .price-grid .pg-cells { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+  .price-grid .pg-cell { display:flex; flex-direction:column; gap:5px; }
+  .price-grid .pg-label { font-size:.72rem; font-weight:600; color:var(--muted); }
+  .price-grid .pg-label small { display:block; font-weight:400; font-size:.64rem; color:var(--faint); }
+  .price-grid input[type=number] { width:100%; }
+  @media (max-width:720px) {
+    .price-table-wrap { display:none; }
+    .price-grid { display:block; }
+  }
+  th, td { border:1px solid var(--line); padding:10px 12px; font-size:.86rem; text-align:left; vertical-align:middle; }
+  th { background:var(--th); color:var(--muted); font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; }
+  th .lim { display:block; font-size:.64rem; font-weight:400; text-transform:none; letter-spacing:0; }
+  .num { text-align:right; }
+
+  input[type=number] {
+    width:76px; height:38px; padding:0 10px;
+    border:1px solid var(--line-strong); border-radius:8px;
+    background:var(--surface); color:var(--ink); font-size:.9rem;
+    font-variant-numeric: tabular-nums;
+    transition:border-color .12s, box-shadow .12s;
+  }
+  input[type=number]:hover { border-color:var(--input-hover); }
+  input[type=number]:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+  label.field { display:flex; flex-direction:column; gap:6px; font-size:.72rem; font-weight:600; color:var(--muted); }
+
+  .warn { color:var(--bad); font-size:.8rem; }
+  .good { color:var(--good); }
+
+  /* ---- Variante B : cartes ---- */
+  .section-head { display:flex; align-items:baseline; justify-content:space-between; margin:0 0 14px; }
+  .section-head .t { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  .section-head .hint { font-size:.78rem; color:var(--faint); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+  .card {
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px 22px 20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
+  }
+  .card h3 {
+    margin:0 0 18px; font-size:1rem; font-weight:650; letter-spacing:-.01em; color:var(--ink);
+    display:flex; align-items:center; gap:8px;
+  }
+  .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--c); box-shadow:0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); display:inline-block; }
+  .icon { width:22px; height:22px; flex:0 0 auto; object-fit:contain; display:inline-block; }
+  .card .inputs { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+  .recipe { font-size:.8rem; color:var(--muted); margin:0 0 10px; }
+  .recipe .pill {
+    display:inline-block; margin:0 6px 6px 0;
+    background:var(--pill); border:1px solid var(--line); border-radius:8px;
+    padding:3px 10px; font-size:.78rem; color:var(--ink);
+  }
+  .card .cost { font-size:1.08rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
+  .card .cost .k { font-weight:500; font-size:.8rem; color:var(--muted); }
+  .card .warn { display:block; margin-top:8px; }
+
+  details.prices {
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:0; margin-bottom:28px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04);
+  }
+  details.prices summary {
+    cursor:pointer; padding:14px 18px; font-weight:600; font-size:.9rem; color:var(--ink);
+    list-style:none; user-select:none;
+  }
+  details.prices summary::-webkit-details-marker { display:none; }
+  details.prices summary::before { content:"▸ "; color:var(--accent); }
+  details.prices[open] summary::before { content:"▾ "; }
+  details.prices .inner { padding:0 18px 16px; }
+
+  .switcher {
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:10px;
+    background:#171a1f; color:#f6f7f9; padding:8px 14px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 8px 24px rgba(16,24,40,.25); font-size:.84rem; z-index:99;
+  }
+  .switcher button { background:#2b3038; color:#fff; border:0; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:.92rem; }
+  .switcher button:hover { background:#3c424c; }
+  .switcher .key { font-weight:700; color:#a5b4fc; }
+</style>
+</head>
+<body>
+<div class="proto-note">⚠ <b>PROTOTYPE jetable</b> — maquette pour valider forme &amp; comportement. Bascule de variante : barre flottante en bas ou touches ← / →.</div>
+
+<div id="app"></div>
+
+<div class="switcher" id="switcher">
+  <button id="prev" title="Variante précédente">←</button>
+  <span id="label"></span>
+  <button id="next" title="Variante suivante">→</button>
+</div>
+
+<script>
+"use strict";
+
+const STATS = [
+  { key:"VITA",   name:"Vitalité",     color:"#ef4444", icon:"assets/img/vitalite.png" },
+  { key:"FORCE",  name:"Force",        color:"#f97316", icon:"assets/img/force.png" },
+  { key:"INTE",   name:"Intelligence", color:"#a855f7", icon:"assets/img/intelligence.png" },
+  { key:"CHANCE", name:"Chance",       color:"#eab308", icon:"assets/img/chance.png" },
+  { key:"AGI",    name:"Agilité",      color:"#22c55e", icon:"assets/img/agilite.png" },
+  { key:"SAGE",   name:"Sagesse",      color:"#0ea5e9", icon:"assets/img/sagesse.png" },
+];
+
+const PALIERS = [
+  { key:"petit",    name:"Petit Parchemin",   threshold:25,  gain:1, def:1000 },
+  { key:"parchemin",name:"Parchemin",         threshold:50,  gain:1, def:2500 },
+  { key:"grand",    name:"Grand Parchemin",   threshold:80,  gain:1, def:5000 },
+  { key:"puissant", name:"Puissant Parchemin",threshold:100, gain:2, def:8000 },
+];
+
+const VARIANTS = {
+  A: { name:"Formulaire linéaire" },
+  B: { name:"Cartes par stat" },
+  C: { name:"Matrice dense" },
+};
+
+const state = {
+  stats: {},
+  prices: {},
+  mode: "optimal",
+};
+STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; state.prices[s.key] = {}; });
+STATS.forEach(s => PALIERS.forEach(p => { state.prices[s.key][p.key] = p.def; }));
+
+const fmt = n => n.toLocaleString("fr-FR");
+
+function compute(statKey) {
+  const cur = state.stats[statKey].cur;
+  const obj = state.stats[statKey].obj;
+  const pr = state.prices[statKey];
+  const q = { petit:0, parchemin:0, grand:0, puissant:0 };
+  const out = { cost:0, reachable:true, warnings:[], quantities:q };
+
+  if (cur >= obj) {
+    out.warnings.push("Déjà-parchoté ≥ objectif → 0 parchemin nécessaire.");
+    return out;
+  }
+  if (cur >= 80 && cur % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Déjà-parchoté impair ≥ 80 : état inatteignable en jeu.");
+    return out;
+  }
+  if (obj > 80 && obj % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Objectif impair > 80 : inatteignable (seul le Puissant +2 couvre 80→100).");
+    return out;
+  }
+  const INF = Infinity;
+  const dp = new Array(101).fill(INF);
+  const parent = new Array(101).fill(null);
+  dp[cur] = 0;
+  for (let n = cur; n <= 100; n++) {
+    if (dp[n] === INF) continue;
+    const steps = [];
+    if (n < 25)  steps.push({ gain:1, key:"petit",    cost:pr.petit });
+    if (n < 50)  steps.push({ gain:1, key:"parchemin",cost:pr.parchemin });
+    if (n < 80)  steps.push({ gain:1, key:"grand",    cost:pr.grand });
+    if (n < 100) steps.push({ gain:2, key:"puissant", cost:pr.puissant });
+    for (const s of steps) {
+      const next = n + s.gain;
+      if (next > obj) continue;
+      if (dp[n] + s.cost < dp[next]) { dp[next] = dp[n] + s.cost; parent[next] = { from:n, key:s.key }; }
+    }
+  }
+  if (dp[obj] === INF) {
+    out.reachable = false;
+    out.warnings.push("Objectif inatteignable avec les paliers disponibles.");
+    return out;
+  }
+  out.cost = dp[obj];
+  let t = obj;
+  while (parent[t]) { out.quantities[parent[t].key]++; t = parent[t].from; }
+  return out;
+}
+
+function computeClassic(statKey) {
+  const cur = state.stats[statKey].cur;
+  const obj = state.stats[statKey].obj;
+  const pr = state.prices[statKey];
+  const q = { petit:0, parchemin:0, grand:0, puissant:0 };
+  const out = { cost:0, reachable:true, warnings:[], quantities:q };
+
+  if (cur >= obj) {
+    out.warnings.push("Déjà-parchoté ≥ objectif → 0 parchemin nécessaire.");
+    return out;
+  }
+  if (cur >= 80 && cur % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Déjà-parchoté impair ≥ 80 : état inatteignable en jeu.");
+    return out;
+  }
+  if (obj > 80 && obj % 2 === 1) {
+    out.reachable = false;
+    out.warnings.push("Objectif impair > 80 : inatteignable (seul le Puissant +2 couvre 80→100).");
+    return out;
+  }
+
+  let level = cur;
+  while (level < obj && level < 25)  { q.petit++;    level += 1; }
+  while (level < obj && level < 50)  { q.parchemin++; level += 1; }
+  while (level < obj && level < 80)  { q.grand++;    level += 1; }
+  while (level < obj && level < 100) { q.puissant++; level += 2; }
+
+  if (level !== obj) {
+    out.reachable = false;
+    out.warnings.push("Objectif inatteignable avec les paliers disponibles.");
+    return out;
+  }
+  out.cost = q.petit*pr.petit + q.parchemin*pr.parchemin + q.grand*pr.grand + q.puissant*pr.puissant;
+  return out;
+}
+
+function statIcon(s) {
+  return s.icon ? `<img class="icon" src="${s.icon}" alt="">` : `<span class="dot"></span>`;
+}
+
+function priceInputsTable(includeStatHeader) {
+  let t = "<div class='price-table-wrap'><table class='fixed'><colgroup>";
+  if (includeStatHeader) t += "<col class='col-stat'>";
+  PALIERS.forEach(() => t += "<col class='col-price'>");
+  t += "</colgroup><thead><tr>";
+  if (includeStatHeader) t += "<th>Statistique</th>";
+  PALIERS.forEach(p => t += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
+  t += "</tr></thead><tbody>";
+  STATS.forEach(s => {
+    t += `<tr>${includeStatHeader ? `<td><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></td>` : ""}`;
+    PALIERS.forEach(p => {
+      t += `<td class="center"><input type="number" min="0" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
+    });
+    t += "</tr>";
+  });
+  t += "</tbody></table></div>";
+
+  let g = "<div class='price-grid'>";
+  STATS.forEach(s => {
+    g += `<div class="pg-stat"><div class="pg-head"><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></div><div class="pg-cells">`;
+    PALIERS.forEach(p => {
+      g += `<label class="pg-cell"><span class="pg-label">${p.name} <small>&lt; ${p.threshold}</small></span><input type="number" min="0" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></label>`;
+    });
+    g += "</div></div>";
+  });
+  g += "</div>";
+  return t + g;
+}
+
+function resultTable() {
+  let h = `<table><thead><tr><th>Statistique</th>`;
+  PALIERS.forEach(p => h += `<th>${p.name}</th>`);
+  h += `<th>Coût (kamas)</th><th></th></tr></thead><tbody>`;
+  STATS.forEach(st => {
+    h += `<tr><td>${st.name}</td>`;
+    PALIERS.forEach(p => h += `<td class="num" id="res-qty-${st.key}-${p.key}">—</td>`);
+    h += `<td class="num" id="res-cost-${st.key}">—</td><td id="res-warn-${st.key}"></td></tr>`;
+  });
+  h += `</tbody></table>`;
+  return h;
+}
+
+/* ---------- Variant A : formulaire linéaire ---------- */
+function renderA() {
+  return `
+    ${siteHeader()}
+    <main>
+    <section>
+      <fieldset><legend>1 · Prix des parchemins (kamas)</legend>${priceInputsTable(true)}</fieldset>
+      <fieldset><legend>2 · Objectifs par statistique</legend>
+        <table><thead><tr><th>Statistique</th><th>Déjà-parchoté</th><th>Objectif</th></tr></thead><tbody>
+        ${STATS.map(s => `<tr><td>${s.name}</td><td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td><td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td></tr>`).join("")}
+        </tbody></table>
+      </fieldset>
+      <fieldset><legend>3 · Recette recommandée</legend>
+        ${resultTable()}
+        <div id="res-global-warn"></div>
+      </fieldset>
+    </section>
+    </main>`;
+}
+
+/* ---------- Variant B : cartes par stat ---------- */
+function renderB() {
+  return `
+    ${siteHeader()}
+    <main>
+    <details class="prices">
+      <summary>Prix des parchemins (kamas)</summary>
+      <div class="inner">${priceInputsTable(true)}</div>
+    </details>
+    <div class="section-head"><span class="t">Statistiques</span><span class="hint">6 caractéristiques · cap 100</span></div>
+    <div class="cards">
+      ${STATS.map(s => `
+        <div class="card ${state.stats[s.key].enabled ? '' : 'disabled'}" style="--c:${s.color}">
+          <button class="stat-toggle ${state.stats[s.key].enabled ? 'on' : 'off'}" data-stat="${s.key}" title="Inclure / exclure cette statistique" aria-label="Inclure ou exclure ${s.name}">${ICON_POWER}</button>
+          <div class="card-body">
+            <h3>${statIcon(s)}${s.name}</h3>
+            <div class="inputs">
+              <label class="field">Déjà-parchoté
+                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
+              </label>
+              <label class="field">Objectif
+                <input type="number" min="0" max="100" ${state.stats[s.key].enabled ? '' : 'disabled'} id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
+              </label>
+            </div>
+            <div id="res-${s.key}"></div>
+          </div>
+        </div>`).join("")}
+    </div>
+    <div id="res-global-warn"></div>
+    </main>`;
+}
+
+/* ---------- Variant C : matrice dense ---------- */
+function renderC() {
+  let h = `${siteHeader()}
+    <main>
+    <table>
+      <thead><tr>
+        <th>Statistique</th>
+        <th>Déjà-parchoté</th><th>Objectif</th>`;
+  PALIERS.forEach(p => h += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
+  h += `<th>Petit</th><th>Parchemin</th><th>Grand</th><th>Puissant</th><th>Coût (kamas)</th></tr></thead><tbody>`;
+  STATS.forEach(s => {
+    h += `<tr><td>${s.name}</td>`;
+    h += `<td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td>`;
+    h += `<td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td>`;
+    PALIERS.forEach(p => {
+      h += `<td><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
+    });
+    PALIERS.forEach(p => h += `<td class="num" id="res-qty-${s.key}-${p.key}">—</td>`);
+    h += `<td class="num" id="res-cost-${s.key}">—</td>`;
+    h += `<td id="res-warn-${s.key}"></td></tr>`;
+  });
+  h += `</tbody></table>`;
+  h += `<div id="res-global-warn"></div></main>`;
+  return h;
+}
+
+function siteHeader() {
+  return `
+    <header class="site">
+      <div class="title-group">
+        <div>
+          <p class="eyebrow">Dofus 3 · coût du parchotage</p>
+          <h1>Parchotage Planner</h1>
+          <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
+      </div>
+      <div class="head-right">
+        <div class="mode-group">
+          <div class="mode-toggle">
+            <button class="mode-btn ${state.mode === 'optimal' ? 'active' : ''}" data-mode="optimal">Optimal</button>
+            <button class="mode-btn ${state.mode === 'classique' ? 'active' : ''}" data-mode="classique">Classique</button>
+          </div>
+          <button class="info-btn" aria-label="Explication des modes de calcul">
+            ${ICON_INFO}
+            <span class="tooltip"><b>Optimal</b> - la combinaison la moins chère en kamas pour atteindre l'objectif.<br><br><b>Classique</b> - la répartition standard 25 Petit · 25 Parchemin · 30 Grand · 10 Puissant.</span>
+          </button>
+        </div>
+        <div class="total-badge">
+          <span class="lbl">Coût total estimé</span>
+          <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
+        </div>
+      </div>
+    </header>`;
+}
+
+function render(variant) {
+  const app = document.getElementById("app");
+  if (variant === "A") app.innerHTML = renderA();
+  else if (variant === "B") app.innerHTML = renderB();
+  else app.innerHTML = renderC();
+  document.getElementById("label").innerHTML = `<span class="key">${variant}</span> — ${VARIANTS[variant].name}`;
+  refreshResults();
+  applyThemeIcon();
+}
+
+function refreshResults() {
+  let total = 0;
+  const globalWarns = [];
+  STATS.forEach(s => {
+    const enabled = state.stats[s.key].enabled;
+    const r = (state.mode === "classique" ? computeClassic : compute)(s.key);
+    if (enabled) total += r.cost;
+    const warnEl = document.getElementById(`res-warn-${s.key}`);
+    if (warnEl) {
+      warnEl.className = r.warnings.length ? "warn" : "good";
+      warnEl.textContent = r.warnings.length ? r.warnings.join(" ") : (r.cost === 0 ? "—" : "✓");
+    }
+    PALIERS.forEach(p => {
+      const el = document.getElementById(`res-qty-${s.key}-${p.key}`);
+      if (el) el.textContent = enabled ? r.quantities[p.key] : "—";
+    });
+    const costEl = document.getElementById(`res-cost-${s.key}`);
+    if (costEl) costEl.textContent = (enabled && r.reachable) ? fmt(r.cost) : "—";
+    const inline = document.getElementById(`res-${s.key}`);
+    if (inline) {
+      if (!enabled) {
+        inline.innerHTML = `<div class="muted">Exclue du calcul</div>`;
+      } else {
+        const pills = PALIERS.filter(p => r.quantities[p.key] > 0)
+          .map(p => `<span class="pill">${r.quantities[p.key]}× ${p.name}</span>`).join("");
+        inline.innerHTML = `
+          <p class="recipe">${pills || `<span class="good">Aucun parchemin nécessaire</span>`}</p>
+          <div class="cost num">${r.reachable ? fmt(r.cost) : "—"} <span class="k">kamas</span></div>
+          ${r.warnings.length ? `<span class="warn">${r.warnings.join(" ")}</span>` : ""}`;
+      }
+    }
+    if (enabled && r.warnings.length) globalWarns.push(`${s.name} : ${r.warnings.join(" ")}`);
+  });
+  const totalEl = document.getElementById("res-total");
+  if (totalEl) totalEl.textContent = fmt(total);
+  const g = document.getElementById("res-global-warn");
+  if (g) g.innerHTML = globalWarns.length ? `<p class="warn">⚠ ${globalWarns.join("<br>")}</p>` : "";
+}
+
+function updateFromInput(el) {
+  const kind = el.dataset.kind, stat = el.dataset.stat;
+  if (kind === "cur") state.stats[stat].cur = Number(el.value) || 0;
+  else if (kind === "obj") state.stats[stat].obj = Number(el.value) || 0;
+  else if (kind === "price") {
+    const pal = el.dataset.palier;
+    state.prices[stat][pal] = Number(el.value) || 0;
+    document.querySelectorAll(`[data-kind="price"][data-stat="${stat}"][data-palier="${pal}"]`).forEach(x => { if (x !== el) x.value = el.value; });
+  }
+  refreshResults();
+}
+
+document.getElementById("app").addEventListener("input", e => { if (e.target.dataset && e.target.dataset.kind) updateFromInput(e.target); });
+
+const ICON_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const ICON_SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
+const ICON_POWER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>`;
+const ICON_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
+const root = document.documentElement;
+root.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+
+function applyThemeIcon() {
+  const b = document.getElementById("theme-toggle");
+  if (b) b.innerHTML = root.getAttribute("data-theme") === "dark" ? ICON_SUN : ICON_MOON;
+}
+
+document.getElementById("app").addEventListener("click", e => {
+  const t = e.target.closest("#theme-toggle");
+  if (t) {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    applyThemeIcon();
+    return;
+  }
+  const m = e.target.closest(".mode-btn");
+  if (m) { state.mode = m.dataset.mode; render(current); return; }
+  const ib = e.target.closest(".info-btn");
+  if (ib) {
+    const wasOpen = ib.classList.contains("open");
+    document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
+    if (!wasOpen) {
+      ib.classList.add("open");
+      if (window.innerWidth <= 720) positionInfoTooltip(ib);
+    }
+    return;
+  }
+  const st = e.target.closest(".stat-toggle");
+  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(current); return; }
+  document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
+});
+
+function positionInfoTooltip(btn) {
+  const tip = btn.querySelector(".tooltip");
+  if (!tip) return;
+  const r = btn.getBoundingClientRect();
+  const margin = 8;
+  tip.style.maxWidth = (window.innerWidth - 16) + "px";
+  tip.style.position = "fixed";
+  tip.style.top = (r.bottom + margin) + "px";
+  tip.style.bottom = "auto";
+  tip.style.right = "auto";
+  tip.style.left = "auto";
+  const width = tip.offsetWidth || 300;
+  let left = r.left + r.width / 2 - width / 2;
+  left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+  tip.style.left = left + "px";
+}
+
+let current = new URLSearchParams(location.search).get("variant") || "B";
+if (!VARIANTS[current]) current = "B";
+
+function go(v) {
+  current = v;
+  const url = new URL(location.href);
+  url.searchParams.set("variant", v);
+  history.replaceState(null, "", url);
+  render(v);
+}
+document.getElementById("prev").addEventListener("click", () => {
+  const keys = Object.keys(VARIANTS);
+  go(keys[(keys.indexOf(current) + keys.length - 1) % keys.length]);
+});
+document.getElementById("next").addEventListener("click", () => {
+  const keys = Object.keys(VARIANTS);
+  go(keys[(keys.indexOf(current) + 1) % keys.length]);
+});
+document.addEventListener("keydown", e => {
+  if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) return;
+  const keys = Object.keys(VARIANTS);
+  if (e.key === "ArrowLeft") go(keys[(keys.indexOf(current) + keys.length - 1) % keys.length]);
+  if (e.key === "ArrowRight") go(keys[(keys.indexOf(current) + 1) % keys.length]);
+});
+
+render(current);
+</script>
+</body>
+</html>
