@@ -138,6 +138,18 @@
   table.fixed .col-price { width:132px; }
   .center { text-align:center; }
   .stat-cell { display:inline-flex; align-items:center; gap:8px; }
+  .price-grid { display:none; }
+  .price-grid .pg-stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .price-grid .pg-head { margin-bottom:10px; }
+  .price-grid .pg-cells { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+  .price-grid .pg-cell { display:flex; flex-direction:column; gap:5px; }
+  .price-grid .pg-label { font-size:.72rem; font-weight:600; color:var(--muted); }
+  .price-grid .pg-label small { display:block; font-weight:400; font-size:.64rem; color:var(--faint); }
+  .price-grid input[type=number] { width:100%; }
+  @media (max-width:720px) {
+    .price-table-wrap { display:none; }
+    .price-grid { display:block; }
+  }
   th, td { border:1px solid var(--line); padding:10px 12px; font-size:.86rem; text-align:left; vertical-align:middle; }
   th { background:var(--th); color:var(--muted); font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; }
   th .lim { display:block; font-size:.64rem; font-weight:400; text-transform:none; letter-spacing:0; }
@@ -348,22 +360,32 @@ function statIcon(s) {
 }
 
 function priceInputsTable(includeStatHeader) {
-  let h = "<table class='fixed'><colgroup>";
-  if (includeStatHeader) h += "<col class='col-stat'>";
-  PALIERS.forEach(() => h += "<col class='col-price'>");
-  h += "</colgroup><thead><tr>";
-  if (includeStatHeader) h += "<th>Statistique</th>";
-  PALIERS.forEach(p => h += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
-  h += "</tr></thead><tbody>";
+  let t = "<div class='price-table-wrap'><table class='fixed'><colgroup>";
+  if (includeStatHeader) t += "<col class='col-stat'>";
+  PALIERS.forEach(() => t += "<col class='col-price'>");
+  t += "</colgroup><thead><tr>";
+  if (includeStatHeader) t += "<th>Statistique</th>";
+  PALIERS.forEach(p => t += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
+  t += "</tr></thead><tbody>";
   STATS.forEach(s => {
-    h += `<tr>${includeStatHeader ? `<td><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></td>` : ""}`;
+    t += `<tr>${includeStatHeader ? `<td><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></td>` : ""}`;
     PALIERS.forEach(p => {
-      h += `<td class="center"><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
+      t += `<td class="center"><input type="number" min="0" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
     });
-    h += "</tr>";
+    t += "</tr>";
   });
-  h += "</tbody></table>";
-  return h;
+  t += "</tbody></table></div>";
+
+  let g = "<div class='price-grid'>";
+  STATS.forEach(s => {
+    g += `<div class="pg-stat"><div class="pg-head"><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></div><div class="pg-cells">`;
+    PALIERS.forEach(p => {
+      g += `<label class="pg-cell"><span class="pg-label">${p.name} <small>&lt; ${p.threshold}</small></span><input type="number" min="0" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></label>`;
+    });
+    g += "</div></div>";
+  });
+  g += "</div>";
+  return t + g;
 }
 
 function resultTable() {
@@ -540,7 +562,11 @@ function updateFromInput(el) {
   const kind = el.dataset.kind, stat = el.dataset.stat;
   if (kind === "cur") state.stats[stat].cur = Number(el.value) || 0;
   else if (kind === "obj") state.stats[stat].obj = Number(el.value) || 0;
-  else if (kind === "price") state.prices[stat][el.dataset.palier] = Number(el.value) || 0;
+  else if (kind === "price") {
+    const pal = el.dataset.palier;
+    state.prices[stat][pal] = Number(el.value) || 0;
+    document.querySelectorAll(`[data-kind="price"][data-stat="${stat}"][data-palier="${pal}"]`).forEach(x => { if (x !== el) x.value = el.value; });
+  }
   refreshResults();
 }
 
