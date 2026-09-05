@@ -105,7 +105,17 @@
     font-size:.78rem; line-height:1.55; font-weight:400; text-align:left;
     box-shadow:0 8px 24px rgba(16,24,40,.18); white-space:normal;
   }
-  .info-btn:hover .tooltip, .info-btn:focus .tooltip { display:block; }
+  .info-btn:hover .tooltip, .info-btn:focus .tooltip, .info-btn.open .tooltip { display:block; }
+
+  @media (max-width: 720px) {
+    .info-btn .tooltip {
+      position: fixed; left:50%; right:auto; top:auto; bottom:84px;
+      transform:translateX(-50%);
+      width:calc(100vw - 32px); max-width:340px;
+    }
+    .head-right { flex-direction:column; align-items:stretch; gap:10px; }
+    .head-right .total-badge { align-self:flex-end; }
+  }
 
   .card { position:relative; }
   .card-body { display:flex; flex-direction:column; }
@@ -565,8 +575,16 @@ document.getElementById("app").addEventListener("click", e => {
   }
   const m = e.target.closest(".mode-btn");
   if (m) { state.mode = m.dataset.mode; render(current); return; }
+  const ib = e.target.closest(".info-btn");
+  if (ib) {
+    const wasOpen = ib.classList.contains("open");
+    document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
+    if (!wasOpen) ib.classList.add("open");
+    return;
+  }
   const st = e.target.closest(".stat-toggle");
-  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(current); }
+  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(current); return; }
+  document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
 });
 
 let current = new URLSearchParams(location.search).get("variant") || "B";
