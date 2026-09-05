@@ -1,6 +1,6 @@
 # Parchotage Planner
 
-Outil web statique qui calcule la combinaison de parchemins la moins chère pour parchoter les statistiques d'un personnage Dofus 3, en respectant les règles officielles de parchotage. Catalogue source : API DofusDB. v1 : coût en kamas uniquement.
+Outil web statique qui calcule la combinaison de parchemins la moins chère pour parchoter les statistiques d'un personnage Dofus 3, en respectant les règles officielles de parchotage. Catalogue source : liste statique embarquée dans l'outil (fournie et validée par l'auteur). v1 : coût en kamas uniquement.
 
 ## Language
 
@@ -9,7 +9,7 @@ Action d'augmenter une statistique de base d'un personnage en consommant des par
 _Avoid_: boos, parchottage
 
 **Parchemin**:
-Objet consommable de Dofus 3 qui confère des points de parchotage sur une statistique quand il est utilisé. Le catalogue (tous les types, normaux comme puissants) est tiré de l'API DofusDB.
+Objet consommable de Dofus 3 qui confère des points de parchotage sur une statistique quand il est utilisé. Le catalogue (tous les types, normaux comme puissants) est embarqué dans l'outil en données statiques.
 _Avoid_: scroll, livre de sorts
 
 **Paliers d'utilisation (d'un parchemin)**:
@@ -50,6 +50,6 @@ _Avoid_: k
 Monnaie secondaire. Coût en avitons hors périmètre v1.
 _Avoid_: avitons → achetés via le Kolizéum
 
-**DofusDB**:
-Base de données communautaire (dofusdb.com) exposant une API du catalogue d'items Dofus 3. Source de vérité pour la liste des parchemins.
-_Avoid_: wiki non structuré
+**Catalogue (statique)**:
+Liste des parchemins embarquée dans l'outil (24 items : 6 stats × 4 paliers), fournie et validée par l'auteur. Aucune dépendance à une API externe au runtime ni au build.
+_Avoid_: API externe, source distante
