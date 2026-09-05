@@ -14,9 +14,32 @@
     --line:#e7e9ee;
     --line-strong:#d7dae0;
     --accent:#4f46e5;
-    --accent-soft:#eef0ff;
     --good:#16a34a;
     --bad:#dc2626;
+    --th:#fafbfc;
+    --pill:#f1f3f5;
+    --input-hover:#c4c8d0;
+    --notebg:#fffbeb;
+    --notefg:#92400e;
+    --noteline:#fde68a;
+  }
+  [data-theme="dark"] {
+    --bg:#0f1115;
+    --surface:#17191f;
+    --ink:#e6e8ec;
+    --muted:#9aa1ab;
+    --faint:#6b7280;
+    --line:#262a32;
+    --line-strong:#333945;
+    --accent:#818cf8;
+    --good:#34d399;
+    --bad:#f87171;
+    --th:#1d2027;
+    --pill:#22262e;
+    --input-hover:#414a59;
+    --notebg:#1c1a0e;
+    --notefg:#e0c36a;
+    --noteline:#4a3d1d;
   }
   * { box-sizing: border-box; }
   html { background: var(--bg); }
@@ -31,7 +54,7 @@
   }
   .num { font-variant-numeric: tabular-nums; }
 
-  .proto-note { background:#fffbeb; color:#92400e; border-bottom:1px solid #fde68a; padding:6px 16px; font-size:.78rem; }
+  .proto-note { background:var(--notebg); color:var(--notefg); border-bottom:1px solid var(--noteline); padding:6px 16px; font-size:.78rem; }
   .proto-note b { letter-spacing:.02em; }
 
   header.site {
@@ -51,6 +74,16 @@
   .total-badge .amt { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; color:var(--ink); }
   .total-badge .amt small { font-size:.75rem; font-weight:500; color:var(--muted); }
 
+  .head-right { display:flex; align-items:center; gap:12px; }
+  .theme-toggle {
+    width:40px; height:40px; border-radius:10px; cursor:pointer;
+    background:var(--surface); border:1px solid var(--line); color:var(--ink);
+    display:inline-flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 2px rgba(16,24,40,.05);
+  }
+  .theme-toggle:hover { border-color:var(--line-strong); }
+  .theme-toggle svg { width:18px; height:18px; }
+
   main { padding:0 20px 48px; max-width:900px; margin:0 auto; }
 
   fieldset { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 20px; margin:0 0 20px; }
@@ -58,7 +91,7 @@
 
   table { border-collapse:collapse; width:100%; }
   th, td { border:1px solid var(--line); padding:10px 12px; font-size:.86rem; text-align:left; vertical-align:middle; }
-  th { background:#fafbfc; color:var(--muted); font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; }
+  th { background:var(--th); color:var(--muted); font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; }
   th .lim { display:block; font-size:.64rem; font-weight:400; text-transform:none; letter-spacing:0; }
   .num { text-align:right; }
 
@@ -69,8 +102,8 @@
     font-variant-numeric: tabular-nums;
     transition:border-color .12s, box-shadow .12s;
   }
-  input[type=number]:hover { border-color:#c4c8d0; }
-  input[type=number]:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(79,70,229,.16); }
+  input[type=number]:hover { border-color:var(--input-hover); }
+  input[type=number]:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
   label.field { display:flex; flex-direction:column; gap:6px; font-size:.72rem; font-weight:600; color:var(--muted); }
 
   .warn { color:var(--bad); font-size:.8rem; }
@@ -97,7 +130,7 @@
   .recipe { font-size:.8rem; color:var(--muted); margin:0 0 10px; }
   .recipe .pill {
     display:inline-block; margin:0 6px 6px 0;
-    background:#f1f3f5; border:1px solid var(--line); border-radius:8px;
+    background:var(--pill); border:1px solid var(--line); border-radius:8px;
     padding:3px 10px; font-size:.78rem; color:var(--ink);
   }
   .card .cost { font-size:1.08rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
@@ -121,6 +154,7 @@
     position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
     display:flex; align-items:center; gap:10px;
     background:#171a1f; color:#f6f7f9; padding:8px 14px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
     box-shadow:0 8px 24px rgba(16,24,40,.25); font-size:.84rem; z-index:99;
   }
   .switcher button { background:#2b3038; color:#fff; border:0; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:.92rem; }
@@ -334,9 +368,12 @@ function siteHeader() {
         <h1>Parchotage Planner</h1>
         <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
       </div>
-      <div class="total-badge">
-        <span class="lbl">Coût total estimé</span>
-        <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
+      <div class="head-right">
+        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
+        <div class="total-badge">
+          <span class="lbl">Coût total estimé</span>
+          <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
+        </div>
       </div>
     </header>`;
 }
@@ -348,6 +385,7 @@ function render(variant) {
   else app.innerHTML = renderC();
   document.getElementById("label").innerHTML = `<span class="key">${variant}</span> — ${VARIANTS[variant].name}`;
   refreshResults();
+  applyThemeIcon();
 }
 
 function refreshResults() {
@@ -393,6 +431,26 @@ function updateFromInput(el) {
 }
 
 document.getElementById("app").addEventListener("input", e => { if (e.target.dataset && e.target.dataset.kind) updateFromInput(e.target); });
+
+const ICON_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const ICON_SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
+
+const root = document.documentElement;
+root.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+
+function applyThemeIcon() {
+  const b = document.getElementById("theme-toggle");
+  if (b) b.innerHTML = root.getAttribute("data-theme") === "dark" ? ICON_SUN : ICON_MOON;
+}
+
+document.getElementById("app").addEventListener("click", e => {
+  const t = e.target.closest("#theme-toggle");
+  if (!t) return;
+  const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
+  applyThemeIcon();
+});
 
 let current = new URLSearchParams(location.search).get("variant") || "B";
 if (!VARIANTS[current]) current = "B";
