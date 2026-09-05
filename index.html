@@ -243,6 +243,7 @@ const state = {
   stats: {},
   prices: {},
   mode: "optimal",
+  pricesOpen: true,
 };
 STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; });
 
@@ -422,7 +423,7 @@ function render() {
   app.innerHTML = `
     ${siteHeader()}
     <main>
-    <details class="prices" open>
+    <details class="prices" ${state.pricesOpen ? "open" : ""}>
       <summary>Prix des parchemins (kamas)</summary>
       <div class="inner">
         <p class="price-note"><b>Prix d'exemple</b> (observés sur le serveur de l'auteur) — les prix varient selon le serveur et dans le temps : remplacez-les par ceux de votre serveur. Vos saisies sont enregistrées localement.</p>
@@ -507,6 +508,10 @@ function updateFromInput(el) {
 }
 
 document.getElementById("app").addEventListener("input", e => { if (e.target.dataset && e.target.dataset.kind) updateFromInput(e.target); });
+
+document.getElementById("app").addEventListener("toggle", e => {
+  if (e.target.classList && e.target.classList.contains("prices")) state.pricesOpen = e.target.open;
+}, true);
 
 const ICON_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 const ICON_SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
