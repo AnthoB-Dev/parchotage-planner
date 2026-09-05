@@ -88,6 +88,24 @@
   .mode-btn { border:0; background:transparent; color:var(--muted); font-size:.82rem; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer; white-space:nowrap; }
   .mode-btn.active { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(16,24,40,.1); }
 
+  .title-group { display:flex; align-items:center; gap:12px; }
+
+  .info-btn {
+    position:relative; width:26px; height:26px; border-radius:8px; cursor:pointer;
+    background:transparent; border:1px solid transparent; color:var(--muted);
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .info-btn:hover { background:var(--pill); color:var(--ink); }
+  .info-btn svg { width:15px; height:15px; }
+  .info-btn .tooltip {
+    display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:50;
+    width:300px; background:var(--surface); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    font-size:.78rem; line-height:1.55; font-weight:400; text-align:left;
+    box-shadow:0 8px 24px rgba(16,24,40,.18); white-space:normal;
+  }
+  .info-btn:hover .tooltip, .info-btn:focus .tooltip { display:block; }
+
   .card { position:relative; }
   .card-body { display:flex; flex-direction:column; }
   .stat-toggle {
@@ -226,7 +244,7 @@ const state = {
   prices: {},
   mode: "optimal",
 };
-STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:true }; state.prices[s.key] = {}; });
+STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; state.prices[s.key] = {}; });
 STATS.forEach(s => PALIERS.forEach(p => { state.prices[s.key][p.key] = p.def; }));
 
 const fmt = n => n.toLocaleString("fr-FR");
@@ -434,21 +452,27 @@ function renderC() {
 function siteHeader() {
   return `
     <header class="site">
-      <div>
-        <p class="eyebrow">Dofus 3 · calcul du parchotage</p>
-        <h1>Parchotage Planner</h1>
-        <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
+      <div class="title-group">
+        <div>
+          <p class="eyebrow">Dofus 3 · calcul du parchotage</p>
+          <h1>Parchotage Planner</h1>
+          <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
       </div>
       <div class="head-right">
         <div class="mode-toggle">
           <button class="mode-btn ${state.mode === 'optimal' ? 'active' : ''}" data-mode="optimal">Optimal</button>
           <button class="mode-btn ${state.mode === 'classique' ? 'active' : ''}" data-mode="classique">Classique</button>
         </div>
+        <button class="info-btn" aria-label="Explication des modes de calcul">
+          ${ICON_INFO}
+          <span class="tooltip"><b>Optimal</b> — la combinaison la moins chère en kamas pour atteindre l'objectif.<br><br><b>Classique</b> — la répartition standard 25 Petit · 25 Parchemin · 30 Grand · 10 Puissant : chaque palier épuisé avant de passer au suivant.</span>
+        </button>
         <div class="total-badge">
           <span class="lbl">Coût total estimé</span>
           <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
         </div>
-        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
       </div>
     </header>`;
 }
@@ -515,6 +539,7 @@ document.getElementById("app").addEventListener("input", e => { if (e.target.dat
 const ICON_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 const ICON_SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
 const ICON_POWER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>`;
+const ICON_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
 
 const root = document.documentElement;
 root.setAttribute("data-theme", localStorage.getItem("theme") || "light");
