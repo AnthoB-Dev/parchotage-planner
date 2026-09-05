@@ -6,78 +6,72 @@
 <title>PROTOTYPE — Parchotage Planner (maquette UI v1)</title>
 <style>
   :root {
-    --bg0:#14101f;
-    --bg1:#241b38;
-    --gold:#e8c76a;
-    --gold-dim:#a98f4f;
-    --ink:#2c2114;
-    --muted:#8a7550;
-    --card:#f8f0da;
-    --card-line:#e0cfa2;
-    --card-strong:#cbb27e;
-    --good:#2e7d32;
-    --bad:#b33939;
+    --bg:#f6f7f9;
+    --surface:#ffffff;
+    --ink:#171a1f;
+    --muted:#6b7280;
+    --faint:#9aa1ab;
+    --line:#e7e9ee;
+    --line-strong:#d7dae0;
+    --accent:#4f46e5;
+    --accent-soft:#eef0ff;
+    --good:#16a34a;
+    --bad:#dc2626;
   }
   * { box-sizing: border-box; }
-  html { background: var(--bg0); }
+  html { background: var(--bg); }
   body {
     margin:0;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    color:#ece3cd;
-    background:
-      radial-gradient(1200px 620px at 50% -12%, #352764 0%, rgba(53,39,100,0) 60%),
-      radial-gradient(900px 520px at 100% 112%, #4a2458 0%, rgba(74,36,88,0) 58%),
-      linear-gradient(180deg, var(--bg1), var(--bg0));
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
     min-height:100vh;
-    background-attachment: fixed;
     padding-bottom:80px;
   }
-  .serif { font-family: Georgia, "Palatino Linotype", "Times New Roman", serif; }
   .num { font-variant-numeric: tabular-nums; }
 
-  .proto-note { background:#241d12; color:#e0c36a; border-bottom:1px solid #4a3d1d; padding:6px 16px; font-size:.78rem; }
+  .proto-note { background:#fffbeb; color:#92400e; border-bottom:1px solid #fde68a; padding:6px 16px; font-size:.78rem; }
   .proto-note b { letter-spacing:.02em; }
 
   header.site {
-    padding:24px 20px 20px;
-    display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
-    border-bottom:1px solid rgba(232,199,106,.22);
+    display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    padding:32px 24px 20px;
+    max-width:1080px; margin:0 auto;
   }
-  header.site .eyebrow { text-transform:uppercase; letter-spacing:.22em; font-size:.68rem; color:var(--gold-dim); margin:0 0 6px; }
-  header.site h1 { font-size:1.75rem; margin:0; font-weight:700; letter-spacing:.01em; color:var(--gold); text-shadow:0 1px 0 rgba(0,0,0,.4); }
-  header.site .sub { font-size:.84rem; color:#c9bd9c; margin:4px 0 0; }
+  header.site .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:.68rem; font-weight:600; color:var(--accent); margin:0 0 8px; }
+  header.site h1 { font-size:1.7rem; margin:0; font-weight:650; letter-spacing:-.02em; color:var(--ink); }
+  header.site .sub { font-size:.9rem; color:var(--muted); margin:6px 0 0; }
   .total-badge {
-    text-align:right;
-    background:linear-gradient(180deg, rgba(232,199,106,.10), rgba(232,199,106,.03));
-    border:1px solid rgba(232,199,106,.4);
-    border-radius:10px;
-    padding:10px 18px;
-    box-shadow:0 0 0 1px rgba(0,0,0,.25), 0 8px 24px rgba(0,0,0,.35);
+    text-align:right; background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; padding:12px 20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.05);
   }
-  .total-badge .lbl { display:block; font-size:.66rem; text-transform:uppercase; letter-spacing:.16em; color:var(--gold-dim); }
-  .total-badge .amt { font-size:1.4rem; font-weight:700; color:var(--gold); }
-  .total-badge .amt small { font-size:.75rem; font-weight:400; color:#c9bd9c; }
+  .total-badge .lbl { display:block; font-size:.66rem; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:var(--faint); }
+  .total-badge .amt { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; color:var(--ink); }
+  .total-badge .amt small { font-size:.75rem; font-weight:500; color:var(--muted); }
 
-  main { padding:22px; max-width:1080px; margin:0 auto; }
+  main { padding:0 24px 24px; max-width:1080px; margin:0 auto; }
 
-  fieldset { border:1px solid var(--card-line); background:var(--card); border-radius:10px; padding:12px 16px; margin:0 0 20px; color:var(--ink); }
-  legend { font-size:.78rem; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.1em; }
+  fieldset { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 20px; margin:0 0 20px; }
+  legend { font-size:.74rem; font-weight:600; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.08em; }
 
   table { border-collapse:collapse; width:100%; }
-  th, td { border:1px solid var(--card-line); padding:6px 8px; font-size:.85rem; text-align:left; vertical-align:middle; }
-  th { background:#efe3c0; color:var(--ink); font-weight:600; }
-  th .lim { display:block; font-size:.66rem; font-weight:400; color:var(--muted); }
+  th, td { border:1px solid var(--line); padding:8px 10px; font-size:.86rem; text-align:left; vertical-align:middle; }
+  th { background:#fafbfc; color:var(--muted); font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; }
+  th .lim { display:block; font-size:.64rem; font-weight:400; text-transform:none; letter-spacing:0; }
   .num { text-align:right; }
 
   input[type=number] {
-    width:68px; padding:6px 7px;
-    border:1px solid var(--card-strong); border-radius:7px;
-    background:#fffdf4; color:var(--ink); font-size:.88rem;
+    width:72px; height:36px; padding:0 10px;
+    border:1px solid var(--line-strong); border-radius:8px;
+    background:var(--surface); color:var(--ink); font-size:.9rem;
     font-variant-numeric: tabular-nums;
-    box-shadow:inset 0 1px 2px rgba(0,0,0,.06);
+    transition:border-color .12s, box-shadow .12s;
   }
-  input[type=number]:focus { outline:2px solid var(--gold); outline-offset:1px; border-color:transparent; }
-  label.field { display:flex; flex-direction:column; gap:3px; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.09em; }
+  input[type=number]:hover { border-color:#c4c8d0; }
+  input[type=number]:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(79,70,229,.16); }
+  label.field { display:flex; flex-direction:column; gap:6px; font-size:.72rem; font-weight:600; color:var(--muted); }
 
   .warn { color:var(--bad); font-size:.8rem; }
   .good { color:var(--good); }
@@ -85,61 +79,50 @@
   /* ---- Variante B : cartes ---- */
   .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
   .card {
-    background:linear-gradient(180deg, #fdf6e4, var(--card));
-    border:1px solid var(--card-strong);
-    border-top:5px solid var(--c);
-    border-radius:10px;
-    padding:14px 16px 16px;
-    position:relative;
-    color:var(--ink);
-    box-shadow:0 8px 22px rgba(0,0,0,.4);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.05);
   }
   .card h3 {
-    margin:0 0 12px; font-size:1.05rem; font-weight:700; letter-spacing:.02em; color:var(--ink);
-    display:flex; align-items:center; gap:9px;
+    margin:0 0 16px; font-size:1rem; font-weight:650; letter-spacing:-.01em; color:var(--ink);
+    display:flex; align-items:center; gap:8px;
   }
-  .seal {
-    width:22px; height:22px; border-radius:50%; flex:0 0 auto;
-    background:
-      radial-gradient(circle at 30% 25%, rgba(255,255,255,.85) 0 12%, rgba(255,255,255,0) 13%),
-      linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 52%, #000));
-    box-shadow: inset 0 -2px 4px rgba(0,0,0,.32), inset 0 2px 2px rgba(255,255,255,.3), 0 2px 3px rgba(0,0,0,.4);
-    display:inline-block;
-  }
-  .card .inputs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-  .recipe { font-size:.8rem; color:var(--muted); margin:0 0 6px; }
+  .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--c); box-shadow:0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); display:inline-block; }
+  .card .inputs { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .recipe { font-size:.8rem; color:var(--muted); margin:0 0 8px; }
   .recipe .pill {
-    display:inline-block; margin:0 6px 4px 0;
-    background:#fffdf4; border:1px solid var(--card-line); border-radius:999px;
-    padding:1px 9px; font-size:.78rem; color:var(--ink);
+    display:inline-block; margin:0 6px 6px 0;
+    background:#f1f3f5; border:1px solid var(--line); border-radius:8px;
+    padding:3px 10px; font-size:.78rem; color:var(--ink);
   }
-  .card .cost { font-size:1.05rem; color:#7a5c16; font-weight:700; }
-  .card .cost .k { font-weight:400; font-size:.8rem; color:var(--muted); }
-  .card .warn { display:block; margin-top:6px; }
+  .card .cost { font-size:1.08rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
+  .card .cost .k { font-weight:500; font-size:.8rem; color:var(--muted); }
+  .card .warn { display:block; margin-top:8px; }
 
   details.prices {
-    background:var(--card); border:1px solid var(--card-strong); border-radius:10px; padding:0; margin-bottom:20px;
-    color:var(--ink); box-shadow:0 8px 22px rgba(0,0,0,.3);
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:0; margin-bottom:20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04);
   }
   details.prices summary {
-    cursor:pointer; padding:13px 16px; font-weight:600; font-size:.9rem; color:var(--ink);
+    cursor:pointer; padding:14px 18px; font-weight:600; font-size:.9rem; color:var(--ink);
     list-style:none; user-select:none;
   }
   details.prices summary::-webkit-details-marker { display:none; }
-  details.prices summary::before { content:"▸ "; color:#7a5c16; }
+  details.prices summary::before { content:"▸ "; color:var(--accent); }
   details.prices[open] summary::before { content:"▾ "; }
-  details.prices .inner { padding:0 16px 14px; }
+  details.prices .inner { padding:0 18px 16px; }
 
   .switcher {
-    position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
-    display:flex; align-items:center; gap:12px;
-    background:#2b2135; color:#ece3cd; padding:8px 14px; border-radius:999px;
-    border:1px solid rgba(232,199,106,.35);
-    box-shadow:0 6px 20px rgba(0,0,0,.5); font-size:.85rem; z-index:99;
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:10px;
+    background:#171a1f; color:#f6f7f9; padding:8px 14px; border-radius:999px;
+    box-shadow:0 8px 24px rgba(16,24,40,.25); font-size:.84rem; z-index:99;
   }
-  .switcher button { background:#3d3050; color:#ece3cd; border:0; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.95rem; }
-  .switcher button:hover { background:#54406b; }
-  .switcher .key { font-weight:700; color:var(--gold); }
+  .switcher button { background:#2b3038; color:#fff; border:0; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:.92rem; }
+  .switcher button:hover { background:#3c424c; }
+  .switcher .key { font-weight:700; color:#a5b4fc; }
 </style>
 </head>
 <body>
@@ -157,12 +140,12 @@
 "use strict";
 
 const STATS = [
-  { key:"FORCE",  name:"Force",        color:"#ff7a3c" },
-  { key:"VITA",   name:"Vitalité",     color:"#ff5a5a" },
-  { key:"SAGE",   name:"Sagesse",      color:"#4da6e0" },
-  { key:"CHANCE", name:"Chance",       color:"#ffd23e" },
-  { key:"AGI",    name:"Agilité",      color:"#4cd97b" },
-  { key:"INTE",   name:"Intelligence", color:"#b06be0" },
+  { key:"FORCE",  name:"Force",        color:"#f97316" },
+  { key:"VITA",   name:"Vitalité",     color:"#ef4444" },
+  { key:"SAGE",   name:"Sagesse",      color:"#0ea5e9" },
+  { key:"CHANCE", name:"Chance",       color:"#eab308" },
+  { key:"AGI",    name:"Agilité",      color:"#22c55e" },
+  { key:"INTE",   name:"Intelligence", color:"#a855f7" },
 ];
 
 const PALIERS = [
@@ -294,7 +277,7 @@ function renderB() {
     <div class="cards">
       ${STATS.map(s => `
         <div class="card" style="--c:${s.color}">
-          <h3><span class="seal"></span>${s.name}</h3>
+          <h3><span class="dot"></span>${s.name}</h3>
           <div class="inputs">
             <label class="field">Déjà-parchoté
               <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
@@ -339,7 +322,7 @@ function siteHeader() {
     <header class="site">
       <div>
         <p class="eyebrow">Dofus 3 · calcul du parchotage</p>
-        <h1 class="serif">Parchotage Planner</h1>
+        <h1>Parchotage Planner</h1>
         <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
       </div>
       <div class="total-badge">
