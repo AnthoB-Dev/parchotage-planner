@@ -90,6 +90,10 @@
   legend { font-size:.74rem; font-weight:600; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.08em; }
 
   table { border-collapse:collapse; width:100%; }
+  table.fixed { table-layout:fixed; }
+  table.fixed .col-price { width:132px; }
+  .center { text-align:center; }
+  .stat-cell { display:inline-flex; align-items:center; gap:8px; }
   th, td { border:1px solid var(--line); padding:10px 12px; font-size:.86rem; text-align:left; vertical-align:middle; }
   th { background:var(--th); color:var(--muted); font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; }
   th .lim { display:block; font-size:.64rem; font-weight:400; text-transform:none; letter-spacing:0; }
@@ -257,15 +261,22 @@ function compute(statKey) {
   return out;
 }
 
+function statIcon(s) {
+  return s.icon ? `<img class="icon" src="${s.icon}" alt="">` : `<span class="dot"></span>`;
+}
+
 function priceInputsTable(includeStatHeader) {
-  let h = "<table><thead><tr>";
+  let h = "<table class='fixed'><colgroup>";
+  if (includeStatHeader) h += "<col class='col-stat'>";
+  PALIERS.forEach(() => h += "<col class='col-price'>");
+  h += "</colgroup><thead><tr>";
   if (includeStatHeader) h += "<th>Statistique</th>";
   PALIERS.forEach(p => h += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
   h += "</tr></thead><tbody>";
   STATS.forEach(s => {
-    h += `<tr>${includeStatHeader ? `<td>${s.name}</td>` : ""}`;
+    h += `<tr>${includeStatHeader ? `<td><span class="stat-cell">${statIcon(s)}<span>${s.name}</span></span></td>` : ""}`;
     PALIERS.forEach(p => {
-      h += `<td class="num"><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
+      h += `<td class="center"><input type="number" min="0" id="in-price-${s.key}-${p.key}" data-kind="price" data-stat="${s.key}" data-palier="${p.key}" value="${state.prices[s.key][p.key]}"></td>`;
     });
     h += "</tr>";
   });
@@ -319,7 +330,7 @@ function renderB() {
     <div class="cards">
       ${STATS.map(s => `
         <div class="card" style="--c:${s.color}">
-          <h3>${s.icon ? `<img class="icon" src="${s.icon}" alt="">` : `<span class="dot"></span>`}${s.name}</h3>
+          <h3>${statIcon(s)}${s.name}</h3>
           <div class="inputs">
             <label class="field">Déjà-parchoté
               <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
