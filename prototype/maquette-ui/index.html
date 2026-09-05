@@ -36,8 +36,8 @@
 
   header.site {
     display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
-    padding:40px 32px 28px;
-    max-width:1080px; margin:0 auto;
+    padding:40px 20px 28px;
+    max-width:900px; margin:0 auto;
   }
   header.site .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:.68rem; font-weight:600; color:var(--accent); margin:0 0 8px; }
   header.site h1 { font-size:1.7rem; margin:0; font-weight:650; letter-spacing:-.02em; color:var(--ink); }
@@ -51,7 +51,7 @@
   .total-badge .amt { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; color:var(--ink); }
   .total-badge .amt small { font-size:.75rem; font-weight:500; color:var(--muted); }
 
-  main { padding:0 32px 48px; max-width:1080px; margin:0 auto; }
+  main { padding:0 20px 48px; max-width:900px; margin:0 auto; }
 
   fieldset { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:16px 20px; margin:0 0 20px; }
   legend { font-size:.74rem; font-weight:600; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.08em; }
@@ -255,6 +255,7 @@ function resultTable() {
 function renderA() {
   return `
     ${siteHeader()}
+    <main>
     <section>
       <fieldset><legend>1 · Prix des parchemins (kamas)</legend>${priceInputsTable(true)}</fieldset>
       <fieldset><legend>2 · Objectifs par statistique</legend>
@@ -266,13 +267,15 @@ function renderA() {
         ${resultTable()}
         <div id="res-global-warn"></div>
       </fieldset>
-    </section>`;
+    </section>
+    </main>`;
 }
 
 /* ---------- Variant B : cartes par stat ---------- */
 function renderB() {
   return `
     ${siteHeader()}
+    <main>
     <details class="prices">
       <summary>Prix des parchemins (kamas)</summary>
       <div class="inner">${priceInputsTable(true)}</div>
@@ -293,12 +296,14 @@ function renderB() {
           <div id="res-${s.key}"></div>
         </div>`).join("")}
     </div>
-    <div id="res-global-warn"></div>`;
+    <div id="res-global-warn"></div>
+    </main>`;
 }
 
 /* ---------- Variant C : matrice dense ---------- */
 function renderC() {
   let h = `${siteHeader()}
+    <main>
     <table>
       <thead><tr>
         <th>Statistique</th>
@@ -317,7 +322,7 @@ function renderC() {
     h += `<td id="res-warn-${s.key}"></td></tr>`;
   });
   h += `</tbody></table>`;
-  h += `<div id="res-global-warn"></div>`;
+  h += `<div id="res-global-warn"></div></main>`;
   return h;
 }
 
