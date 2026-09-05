@@ -5,48 +5,138 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PROTOTYPE — Parchotage Planner (maquette UI v1)</title>
 <style>
-  :root { --ink:#1a1a1a; --line:#bbb; --muted:#666; --bg:#fff; --soft:#f4f4f4; }
+  :root {
+    --paper:#efe3c6;
+    --paper-deep:#e4d2a8;
+    --card:#fbf2d9;
+    --ink:#3a2b1a;
+    --muted:#8a7550;
+    --line:#d9c69a;
+    --line-strong:#c4ac74;
+    --bronze:#7a5c16;
+    --good:#2e7d32;
+    --bad:#b33939;
+  }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:var(--ink); background:var(--bg); padding-bottom:72px; }
-  h1 { font-size:1.1rem; margin:0 0 2px; }
-  h2 { font-size:.95rem; margin:0 0 10px; }
-  .muted { color:var(--muted); font-size:.8rem; }
-  .proto-note { background:#fff3cd; border-bottom:1px solid #e0c36a; padding:6px 16px; font-size:.8rem; }
-  main { padding:16px; max-width:980px; margin:0 auto; }
+  html { background: var(--paper); }
+  body {
+    margin:0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(255,255,255,.35), transparent 55%),
+      repeating-linear-gradient(0deg, rgba(122,92,22,.018) 0 2px, transparent 2px 4px),
+      var(--paper);
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  .serif { font-family: Georgia, "Palatino Linotype", "Times New Roman", serif; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .proto-note { background:#fff3cd; border-bottom:1px solid #e0c36a; padding:6px 16px; font-size:.78rem; color:#5b4a12; }
+  .proto-note b { letter-spacing:.02em; }
+
+  header.site {
+    background: linear-gradient(180deg, var(--paper-deep), var(--paper));
+    border-bottom:1px solid var(--line-strong);
+    padding:18px 20px 14px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  header.site .eyebrow { text-transform:uppercase; letter-spacing:.18em; font-size:.68rem; color:var(--muted); margin:0 0 4px; }
+  header.site h1 { font-size:1.6rem; margin:0; letter-spacing:.01em; font-weight:700; }
+  header.site .sub { font-size:.82rem; color:var(--muted); margin:2px 0 0; }
+  .total-badge {
+    text-align:right;
+    background:var(--card);
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    padding:8px 16px;
+    box-shadow: 0 1px 0 rgba(122,92,22,.12) inset;
+  }
+  .total-badge .lbl { display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); }
+  .total-badge .amt { font-size:1.35rem; font-weight:700; color:var(--bronze); }
+  .total-badge .amt small { font-size:.75rem; font-weight:400; }
+
+  main { padding:20px; max-width:1060px; margin:0 auto; }
+
+  fieldset { border:1px solid var(--line); background:var(--card); border-radius:8px; padding:12px 16px; margin:0 0 20px; }
+  legend { font-size:.78rem; color:var(--muted); padding:0 8px; text-transform:uppercase; letter-spacing:.1em; }
+
   table { border-collapse:collapse; width:100%; }
-  th, td { border:1px solid var(--line); padding:4px 6px; font-size:.85rem; text-align:left; vertical-align:middle; }
-  th { background:var(--soft); font-weight:600; }
-  input[type=number] { width:64px; padding:3px 4px; border:1px solid var(--line); font-size:.85rem; }
+  th, td { border:1px solid var(--line); padding:6px 8px; font-size:.85rem; text-align:left; vertical-align:middle; }
+  th { background:var(--paper-deep); color:var(--ink); font-weight:600; }
+  th .lim { display:block; font-size:.66rem; font-weight:400; color:var(--muted); }
   .num { text-align:right; }
-  .warn { color:#a33; font-size:.8rem; }
-  .ok { color:#275; }
-  .total { font-size:1rem; font-weight:700; }
-  section { margin-bottom:22px; }
-  fieldset { border:1px dashed var(--line); padding:8px 12px; margin:0 0 16px; }
-  legend { font-size:.8rem; color:var(--muted); padding:0 4px; }
 
-  /* Variant B cards */
-  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
-  .card { border:1px solid var(--line); border-radius:4px; padding:10px; }
-  .card h3 { margin:0 0 8px; font-size:.9rem; }
-  .card .row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
-  .card .row label { font-size:.8rem; color:var(--muted); flex:0 0 auto; }
+  input[type=number] {
+    width:68px; padding:6px 7px;
+    border:1px solid var(--line-strong); border-radius:6px;
+    background:#fffdf4; color:var(--ink); font-size:.88rem;
+    font-variant-numeric: tabular-nums;
+  }
+  input[type=number]:focus { outline:2px solid var(--bronze); outline-offset:1px; border-color:transparent; }
+  label.field { display:flex; flex-direction:column; gap:3px; font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
 
-  /* Switcher bar */
+  .warn { color:var(--bad); font-size:.8rem; }
+  .good { color:var(--good); }
+
+  /* ---- Variante B : cartes ---- */
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+  .card {
+    background:var(--card);
+    border:1px solid var(--line-strong);
+    border-radius:10px;
+    padding:14px 16px 16px;
+    position:relative;
+    box-shadow:0 2px 0 rgba(122,92,22,.08);
+  }
+  .card h3 {
+    margin:0 0 12px; font-size:1.05rem; font-weight:700; letter-spacing:.02em;
+    display:flex; align-items:center; gap:9px;
+  }
+  .seal {
+    width:22px; height:22px; border-radius:50%; flex:0 0 auto;
+    background: radial-gradient(circle at 32% 28%, #fff7 0 14%, transparent 15%) , radial-gradient(circle at 50% 50%, var(--c) 0 62%, color-mix(in srgb, var(--c) 70%, #000) 63% 78%, #ffffff00 79%);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.18), 0 1px 2px rgba(0,0,0,.25);
+    display:inline-block;
+  }
+  .card .inputs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .recipe { font-size:.8rem; color:var(--muted); margin:0 0 6px; }
+  .recipe .pill {
+    display:inline-block; margin:0 6px 4px 0;
+    background:#fffdf4; border:1px solid var(--line); border-radius:999px;
+    padding:1px 9px; font-size:.78rem; color:var(--ink);
+  }
+  .card .cost { font-size:1rem; color:var(--bronze); font-weight:700; }
+  .card .cost .k { font-weight:400; font-size:.8rem; color:var(--muted); }
+  .card .warn { display:block; margin-top:6px; }
+
+  details.prices { background:var(--card); border:1px solid var(--line-strong); border-radius:8px; padding:0; margin-bottom:20px; }
+  details.prices summary {
+    cursor:pointer; padding:12px 16px; font-weight:600; font-size:.9rem;
+    list-style:none; user-select:none;
+  }
+  details.prices summary::-webkit-details-marker { display:none; }
+  details.prices summary::before { content:"▸ "; color:var(--bronze); }
+  details.prices[open] summary::before { content:"▾ "; }
+  details.prices .inner { padding:0 16px 14px; }
+
   .switcher {
     position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
     display:flex; align-items:center; gap:12px;
-    background:#111; color:#fff; padding:8px 14px; border-radius:999px;
-    box-shadow:0 4px 16px rgba(0,0,0,.3); font-size:.85rem; z-index:99;
+    background:#1d160c; color:#f3e8cd; padding:8px 14px; border-radius:999px;
+    box-shadow:0 4px 16px rgba(0,0,0,.35); font-size:.85rem; z-index:99;
   }
-  .switcher button { background:#333; color:#fff; border:0; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; }
-  .switcher button:hover { background:#555; }
-  .switcher .key { font-weight:700; }
+  .switcher button { background:#3a2b1a; color:#f3e8cd; border:0; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.95rem; }
+  .switcher button:hover { background:#5b4a12; }
+  .switcher .key { font-weight:700; color:#e6c86e; }
 </style>
 </head>
 <body>
-<div class="proto-note">⚠ PROTOTYPE jetable — maquette basse fidélité pour valider forme &amp; comportement. Bascule de variante : barre flottante en bas ou touches ← / →.</div>
-<main id="app"></main>
+<div class="proto-note">⚠ <b>PROTOTYPE jetable</b> — maquette pour valider forme &amp; comportement. Bascule de variante : barre flottante en bas ou touches ← / →.</div>
+
+<div id="app"></div>
+
 <div class="switcher" id="switcher">
   <button id="prev" title="Variante précédente">←</button>
   <span id="label"></span>
@@ -57,12 +147,12 @@
 "use strict";
 
 const STATS = [
-  { key:"FORCE",  name:"Force" },
-  { key:"VITA",   name:"Vitalité" },
-  { key:"SAGE",   name:"Sagesse" },
-  { key:"CHANCE", name:"Chance" },
-  { key:"AGI",    name:"Agilité" },
-  { key:"INTE",   name:"Intelligence" },
+  { key:"FORCE",  name:"Force",        color:"#d35400" },
+  { key:"VITA",   name:"Vitalité",     color:"#c0392b" },
+  { key:"SAGE",   name:"Sagesse",      color:"#2980b9" },
+  { key:"CHANCE", name:"Chance",       color:"#e6b800" },
+  { key:"AGI",    name:"Agilité",      color:"#27ae60" },
+  { key:"INTE",   name:"Intelligence", color:"#8e44ad" },
 ];
 
 const PALIERS = [
@@ -86,6 +176,7 @@ STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100 }; state.prices[s.key
 STATS.forEach(s => PALIERS.forEach(p => { state.prices[s.key][p.key] = p.def; }));
 
 const fmt = n => n.toLocaleString("fr-FR");
+const statByName = k => STATS.find(s => s.key === k);
 
 function compute(statKey) {
   const cur = state.stats[statKey].cur;
@@ -139,7 +230,7 @@ function compute(statKey) {
 function priceInputsTable(includeStatHeader) {
   let h = "<table><thead><tr>";
   if (includeStatHeader) h += "<th>Statistique</th>";
-  PALIERS.forEach(p => h += `<th>${p.name}<br><span class='muted'>&lt; ${p.threshold}</span></th>`);
+  PALIERS.forEach(p => h += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
   h += "</tr></thead><tbody>";
   STATS.forEach(s => {
     h += `<tr>${includeStatHeader ? `<td>${s.name}</td>` : ""}`;
@@ -152,22 +243,7 @@ function priceInputsTable(includeStatHeader) {
   return h;
 }
 
-function statInputs(s) {
-  return `
-    <label class="muted">Déjà-parchoté
-      <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
-    </label>
-    <label class="muted">Objectif
-      <input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
-    </label>`;
-}
-
-function resultInline(s) {
-  return `
-    <div id="res-${s.key}" class="result"></div>`;
-}
-
-function resultTable(s) {
+function resultTable() {
   let h = `<table><thead><tr><th>Statistique</th>`;
   PALIERS.forEach(p => h += `<th>${p.name}</th>`);
   h += `<th>Coût (kamas)</th><th></th></tr></thead><tbody>`;
@@ -183,48 +259,42 @@ function resultTable(s) {
 /* ---------- Variant A : formulaire linéaire ---------- */
 function renderA() {
   return `
-    <h1>Parchotage Planner — calcul du parchotage optimal</h1>
-    <p class="muted">Variante A — Formulaire linéaire : prix → stats → résultat.</p>
-
+    ${siteHeader()}
     <section>
-      <h2>1 · Prix des parchemins (kamas)</h2>
-      ${priceInputsTable(true)}
-    </section>
-
-    <section>
-      <h2>2 · Objectifs par statistique</h2>
-      <table><thead><tr><th>Statistique</th><th>Déjà-parchoté</th><th>Objectif</th></tr></thead><tbody>
-      ${STATS.map(s => `<tr><td>${s.name}</td><td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td><td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td></tr>`).join("")}
-      </tbody></table>
-    </section>
-
-    <section>
-      <h2>3 · Recette recommandée</h2>
-      ${resultTable()}
-      <p class="total">Total : <span id="res-total">—</span> kamas</p>
-      <div id="res-global-warn"></div>
+      <fieldset><legend>1 · Prix des parchemins (kamas)</legend>${priceInputsTable(true)}</fieldset>
+      <fieldset><legend>2 · Objectifs par statistique</legend>
+        <table><thead><tr><th>Statistique</th><th>Déjà-parchoté</th><th>Objectif</th></tr></thead><tbody>
+        ${STATS.map(s => `<tr><td>${s.name}</td><td><input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}"></td><td><input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}"></td></tr>`).join("")}
+        </tbody></table>
+      </fieldset>
+      <fieldset><legend>3 · Recette recommandée</legend>
+        ${resultTable()}
+        <div id="res-global-warn"></div>
+      </fieldset>
     </section>`;
 }
 
 /* ---------- Variant B : cartes par stat ---------- */
 function renderB() {
   return `
-    <h1>Parchotage Planner</h1>
-    <p class="muted">Variante B — Cartes par stat : chaque stat porte ses entrées et son résultat.</p>
-
-    <details>
-      <summary class="muted">Prix des parchemins (kamas) — déplier</summary>
-      ${priceInputsTable(true)}
+    ${siteHeader()}
+    <details class="prices">
+      <summary>Prix des parchemins (kamas)</summary>
+      <div class="inner">${priceInputsTable(true)}</div>
     </details>
-
-    <p class="total">Coût total estimé : <span id="res-total">—</span> kamas</p>
-
     <div class="cards">
       ${STATS.map(s => `
         <div class="card">
-          <h3>${s.name}</h3>
-          <div class="row">${statInputs(s)}</div>
-          ${resultInline(s)}
+          <h3><span class="seal" style="--c:${s.color}"></span>${s.name}</h3>
+          <div class="inputs">
+            <label class="field">Déjà-parchoté
+              <input type="number" min="0" max="100" id="in-cur-${s.key}" data-kind="cur" data-stat="${s.key}" value="${state.stats[s.key].cur}">
+            </label>
+            <label class="field">Objectif
+              <input type="number" min="0" max="100" id="in-obj-${s.key}" data-kind="obj" data-stat="${s.key}" value="${state.stats[s.key].obj}">
+            </label>
+          </div>
+          <div id="res-${s.key}"></div>
         </div>`).join("")}
     </div>
     <div id="res-global-warn"></div>`;
@@ -232,14 +302,12 @@ function renderB() {
 
 /* ---------- Variant C : matrice dense ---------- */
 function renderC() {
-  let h = `
-    <h1>Parchotage Planner — matrice de saisie</h1>
-    <p class="muted">Variante C — Matrice dense : tout sur une seule table, prix saisis en colonnes.</p>
+  let h = `${siteHeader()}
     <table>
       <thead><tr>
         <th>Statistique</th>
         <th>Déjà-parchoté</th><th>Objectif</th>`;
-  PALIERS.forEach(p => h += `<th>${p.name}<br><span class='muted'>&lt; ${p.threshold}</span></th>`);
+  PALIERS.forEach(p => h += `<th>${p.name}<span class="lim">&lt; ${p.threshold}</span></th>`);
   h += `<th>Petit</th><th>Parchemin</th><th>Grand</th><th>Puissant</th><th>Coût (kamas)</th></tr></thead><tbody>`;
   STATS.forEach(s => {
     h += `<tr><td>${s.name}</td>`;
@@ -253,9 +321,23 @@ function renderC() {
     h += `<td id="res-warn-${s.key}"></td></tr>`;
   });
   h += `</tbody></table>`;
-  h += `<p class="total">Total : <span id="res-total">—</span> kamas</p>`;
   h += `<div id="res-global-warn"></div>`;
   return h;
+}
+
+function siteHeader() {
+  return `
+    <header class="site">
+      <div>
+        <p class="eyebrow">Dofus 3 · calcul du parchotage</p>
+        <h1 class="serif">Parchotage Planner</h1>
+        <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
+      </div>
+      <div class="total-badge">
+        <span class="lbl">Coût total estimé</span>
+        <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
+      </div>
+    </header>`;
 }
 
 function render(variant) {
@@ -275,7 +357,7 @@ function refreshResults() {
     total += r.cost;
     const warnEl = document.getElementById(`res-warn-${s.key}`);
     if (warnEl) {
-      warnEl.className = r.warnings.length ? "warn" : "ok";
+      warnEl.className = r.warnings.length ? "warn" : "good";
       warnEl.textContent = r.warnings.length ? r.warnings.join(" ") : (r.cost === 0 ? "—" : "✓");
     }
     PALIERS.forEach(p => {
@@ -284,14 +366,14 @@ function refreshResults() {
     });
     const costEl = document.getElementById(`res-cost-${s.key}`);
     if (costEl) costEl.textContent = r.reachable ? fmt(r.cost) : "—";
-    // variant B inline result
     const inline = document.getElementById(`res-${s.key}`);
     if (inline) {
+      const pills = PALIERS.filter(p => r.quantities[p.key] > 0)
+        .map(p => `<span class="pill">${r.quantities[p.key]}× ${p.name}</span>`).join("");
       inline.innerHTML = `
-        <div class="muted">Recette : ` + PALIERS.filter(p => r.quantities[p.key] > 0)
-          .map(p => `${r.quantities[p.key]}× ${p.name}`).join(" · ") + `</div>
-        <div>Coût : <strong>${r.reachable ? fmt(r.cost) : "—"} kamas</strong></div>
-        ${r.warnings.length ? `<div class="warn">${r.warnings.join(" ")}</div>` : ""}`;
+        <p class="recipe">${pills || `<span class="good">Aucun parchemin nécessaire</span>`}</p>
+        <div class="cost num">${r.reachable ? fmt(r.cost) : "—"} <span class="k">kamas</span></div>
+        ${r.warnings.length ? `<span class="warn">${r.warnings.join(" ")}</span>` : ""}`;
     }
     if (r.warnings.length) globalWarns.push(`${s.name} : ${r.warnings.join(" ")}`);
   });
@@ -311,8 +393,8 @@ function updateFromInput(el) {
 
 document.getElementById("app").addEventListener("input", e => { if (e.target.dataset && e.target.dataset.kind) updateFromInput(e.target); });
 
-let current = new URLSearchParams(location.search).get("variant") || "A";
-if (!VARIANTS[current]) current = "A";
+let current = new URLSearchParams(location.search).get("variant") || "B";
+if (!VARIANTS[current]) current = "B";
 
 function go(v) {
   current = v;
