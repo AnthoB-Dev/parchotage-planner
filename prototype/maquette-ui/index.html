@@ -452,13 +452,10 @@ function renderC() {
 function siteHeader() {
   return `
     <header class="site">
-      <div class="title-group">
-        <div>
-          <p class="eyebrow">Dofus 3 · calcul du parchotage</p>
-          <h1>Parchotage Planner</h1>
-          <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
-        </div>
-        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
+      <div>
+        <p class="eyebrow">Dofus 3 · calcul du parchotage</p>
+        <h1>Parchotage Planner</h1>
+        <p class="sub">La combinaison de parchemins la moins chère pour atteindre vos objectifs.</p>
       </div>
       <div class="head-right">
         <div class="mode-toggle">
@@ -467,8 +464,9 @@ function siteHeader() {
         </div>
         <button class="info-btn" aria-label="Explication des modes de calcul">
           ${ICON_INFO}
-          <span class="tooltip"><b>Optimal</b> — la combinaison la moins chère en kamas pour atteindre l'objectif.<br><br><b>Classique</b> — la répartition standard 25 Petit · 25 Parchemin · 30 Grand · 10 Puissant : chaque palier épuisé avant de passer au suivant.</span>
+          <span class="tooltip"><b>Optimal</b> - la combinaison la moins chère en kamas pour atteindre l'objectif.<br><br><b>Classique</b> - la répartition standard 25 Petit · 25 Parchemin · 30 Grand · 10 Puissant.</span>
         </button>
+        <button id="theme-toggle" class="theme-toggle" title="Basculer le thème" aria-label="Basculer le thème"></button>
         <div class="total-badge">
           <span class="lbl">Coût total estimé</span>
           <span class="amt num"><span id="res-total">—</span> <small>kamas</small></span>
