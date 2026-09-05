@@ -237,34 +237,65 @@ const PRICE_DEFAULTS = {
   SAGE:   { petit:4499,  parchemin:26999, grand:38999, puissant:58999 },
 };
 
-const PRICES_KEY = "pp.prices.v1";
+const STATE_KEY = "pp.state.v1";
+const PRICES_KEY = "pp.prices.v1"; /* ancienne clé, migrée */
+
+function defaultStats() {
+  const stats = {};
+  STATS.forEach(s => { stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; });
+  return stats;
+}
+function defaultPrices() {
+  const prices = {};
+  STATS.forEach(s => { prices[s.key] = Object.assign({}, PRICE_DEFAULTS[s.key]); });
+  return prices;
+}
 
 const state = {
-  stats: {},
-  prices: {},
+  stats: defaultStats(),
+  prices: defaultPrices(),
   mode: "optimal",
   pricesOpen: true,
 };
-STATS.forEach(s => { state.stats[s.key] = { cur:0, obj:100, enabled:s.key === "VITA" }; });
 
-function loadPrices() {
-  const defs = {};
-  STATS.forEach(s => { defs[s.key] = Object.assign({}, PRICE_DEFAULTS[s.key]); });
-  try {
-    const saved = JSON.parse(localStorage.getItem(PRICES_KEY));
-    if (saved) {
-      STATS.forEach(s => {
-        const sp = saved[s.key];
-        if (sp) PALIERS.forEach(p => { if (typeof sp[p.key] === "number") defs[s.key][p.key] = sp[p.key]; });
-      });
+const clamp = (v, min, max) => Math.max(min, Math.min(max, Math.round(Number(v) || min)));
+
+function loadState() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STATE_KEY)); } catch (e) {}
+  if (!saved || typeof saved !== "object") {
+    try { /* migration : ancien stockage prix seul */
+      const p = JSON.parse(localStorage.getItem(PRICES_KEY));
+      if (p && typeof p === "object") saved = { prices: p };
+    } catch (e) {}
+  }
+  if (!saved) return;
+  if (saved.mode === "optimal" || saved.mode === "classique") state.mode = saved.mode;
+  if (typeof saved.pricesOpen === "boolean") state.pricesOpen = saved.pricesOpen;
+  const savedStats = saved.stats || {};
+  const savedPrices = saved.prices || {};
+  STATS.forEach(s => {
+    const st = savedStats[s.key];
+    if (st) {
+      state.stats[s.key].cur = clamp(st.cur, 0, 100);
+      state.stats[s.key].obj = clamp(st.obj, 0, 100);
+      if (typeof st.enabled === "boolean") state.stats[s.key].enabled = st.enabled;
     }
-  } catch (e) { /* prix corrompus -> défauts */ }
-  state.prices = defs;
+    const sp = savedPrices[s.key];
+    if (sp) PALIERS.forEach(p => { if (typeof sp[p.key] === "number") state.prices[s.key][p.key] = Math.max(0, sp[p.key]); });
+  });
 }
-loadPrices();
+loadState();
 
-function savePrices() {
-  try { localStorage.setItem(PRICES_KEY, JSON.stringify(state.prices)); } catch (e) {}
+function saveState() {
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify({
+      stats: state.stats,
+      prices: state.prices,
+      mode: state.mode,
+      pricesOpen: state.pricesOpen,
+    }));
+  } catch (e) {}
 }
 
 const fmt = n => n.toLocaleString("fr-FR");
@@ -501,16 +532,19 @@ function updateFromInput(el) {
   else if (kind === "price") {
     const pal = el.dataset.palier;
     state.prices[stat][pal] = Number(el.value) || 0;
-    savePrices();
     document.querySelectorAll(`[data-kind="price"][data-stat="${stat}"][data-palier="${pal}"]`).forEach(x => { if (x !== el) x.value = el.value; });
   }
+  saveState();
   refreshResults();
 }
 
 document.getElementById("app").addEventListener("input", e => { if (e.target.dataset && e.target.dataset.kind) updateFromInput(e.target); });
 
 document.getElementById("app").addEventListener("toggle", e => {
-  if (e.target.classList && e.target.classList.contains("prices")) state.pricesOpen = e.target.open;
+  if (e.target.classList && e.target.classList.contains("prices")) {
+    state.pricesOpen = e.target.open;
+    saveState();
+  }
 }, true);
 
 const ICON_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
@@ -536,7 +570,7 @@ document.getElementById("app").addEventListener("click", e => {
     return;
   }
   const m = e.target.closest(".mode-btn");
-  if (m) { state.mode = m.dataset.mode; render(); return; }
+  if (m) { state.mode = m.dataset.mode; saveState(); render(); return; }
   const ib = e.target.closest(".info-btn");
   if (ib) {
     const wasOpen = ib.classList.contains("open");
@@ -548,7 +582,7 @@ document.getElementById("app").addEventListener("click", e => {
     return;
   }
   const st = e.target.closest(".stat-toggle");
-  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; render(); return; }
+  if (st) { const k = st.dataset.stat; state.stats[k].enabled = !state.stats[k].enabled; saveState(); render(); return; }
   document.querySelectorAll(".info-btn.open").forEach(b => b.classList.remove("open"));
 });
 
